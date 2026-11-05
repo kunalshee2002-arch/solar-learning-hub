@@ -168,20 +168,24 @@ button, input, select, textarea {
   background: #8dc3a3;
 }
 
-.panel {
+/* FIX: scoped to .heroart so it does NOT affect the admin .panel */
+.heroart .panel {
   position: absolute;
   width: 125px;
   height: 82px;
+  padding: 0;
+  margin: 0;
   background: repeating-linear-gradient(90deg, #1b5e67 0 2px, #287b80 2px 40px);
   border: 5px solid #d6e6dd;
+  border-radius: 0;
   transform: skewY(-13deg);
   box-shadow: 0 8px 15px #174c3d30;
 }
 
-.p1 { bottom: 90px; left: 16%; }
-.p2 { bottom: 112px; left: 43%; }
-.p3 { bottom: 72px; left: 68%; }
-.p4 { bottom: 10px; left: 40%; }
+.heroart .p1 { bottom: 90px; left: 16%; }
+.heroart .p2 { bottom: 112px; left: 43%; }
+.heroart .p3 { bottom: 72px; left: 68%; }
+.heroart .p4 { bottom: 10px; left: 40%; }
 
 /* STATS */
 
@@ -585,6 +589,7 @@ footer span {
   gap: 18px;
 }
 
+/* Admin .panel (white card). Hero solar panels are styled separately via .heroart .panel */
 .panel {
   background: white;
   border: 1px solid var(--line);
@@ -650,6 +655,51 @@ code {
   padding: 2px 5px;
   border-radius: 4px;
   font-size: 11px;
+}
+
+/* FORCE ADMIN CARDS SEPARATION */
+
+main.adminwrap.admin-dashboard {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 25px !important;
+}
+
+main.adminwrap.admin-dashboard > .admin-section {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 150px;
+  position: relative !important;
+  margin: 0 0 25px 0 !important;
+  padding: 30px !important;
+  background: #ffffff !important;
+  border: 2px solid #dce9e2 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 25px rgba(20, 70, 50, 0.10) !important;
+}
+
+main.adminwrap.admin-dashboard > .admin-section + .admin-section {
+  margin-top: 0 !important;
+}
+
+main.adminwrap.admin-dashboard .admin-section-title {
+  display: flex !important;
+  margin-bottom: 25px !important;
+  padding-bottom: 18px !important;
+  border-bottom: 1px solid #dce9e2 !important;
+}
+
+main.adminwrap.admin-dashboard .admin-form {
+  display: block !important;
+  width: 100% !important;
+  max-width: 700px !important;
+}
+
+main.adminwrap.admin-dashboard .admin-section label {
+  display: block !important;
+  margin-bottom: 18px !important;
 }
 
 /* TABLET */
@@ -776,53 +826,7 @@ code {
   .inputs {
     grid-template-columns: 1fr;
   }
-}
-/* FORCE ADMIN CARDS SEPARATION */
 
-main.adminwrap.admin-dashboard {
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: stretch !important;
-  gap: 25px !important;
-}
-
-main.adminwrap.admin-dashboard > .admin-section {
-  display: block !important;
-  flex: 0 0 auto !important;
-  width: 100% !important;
-  min-height: 150px;
-  position: relative !important;
-  margin: 0 0 25px 0 !important;
-  padding: 30px !important;
-  background: #ffffff !important;
-  border: 2px solid #dce9e2 !important;
-  border-radius: 18px !important;
-  box-shadow: 0 8px 25px rgba(20, 70, 50, 0.10) !important;
-}
-
-main.adminwrap.admin-dashboard > .admin-section + .admin-section {
-  margin-top: 0 !important;
-}
-
-main.adminwrap.admin-dashboard .admin-section-title {
-  display: flex !important;
-  margin-bottom: 25px !important;
-  padding-bottom: 18px !important;
-  border-bottom: 1px solid #dce9e2 !important;
-}
-
-main.adminwrap.admin-dashboard .admin-form {
-  display: block !important;
-  width: 100% !important;
-  max-width: 700px !important;
-}
-
-main.adminwrap.admin-dashboard .admin-section label {
-  display: block !important;
-  margin-bottom: 18px !important;
-}
-
-@media(max-width:600px) {
   main.adminwrap.admin-dashboard > .admin-section {
     padding: 18px !important;
   }
