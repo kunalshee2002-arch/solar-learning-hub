@@ -777,3 +777,53 @@ code {
     grid-template-columns: 1fr;
   }
 }
+/* FORCE ADMIN CARDS SEPARATION */
+
+main.adminwrap.admin-dashboard {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 25px !important;
+}
+
+main.adminwrap.admin-dashboard > .admin-section {
+  display: block !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 150px;
+  position: relative !important;
+  margin: 0 0 25px 0 !important;
+  padding: 30px !important;
+  background: #ffffff !important;
+  border: 2px solid #dce9e2 !important;
+  border-radius: 18px !important;
+  box-shadow: 0 8px 25px rgba(20, 70, 50, 0.10) !important;
+}
+
+main.adminwrap.admin-dashboard > .admin-section + .admin-section {
+  margin-top: 0 !important;
+}
+
+main.adminwrap.admin-dashboard .admin-section-title {
+  display: flex !important;
+  margin-bottom: 25px !important;
+  padding-bottom: 18px !important;
+  border-bottom: 1px solid #dce9e2 !important;
+}
+
+main.adminwrap.admin-dashboard .admin-form {
+  display: block !important;
+  width: 100% !important;
+  max-width: 700px !important;
+}
+
+main.adminwrap.admin-dashboard .admin-section label {
+  display: block !important;
+  margin-bottom: 18px !important;
+}
+
+@media(max-width:600px) {
+  main.adminwrap.admin-dashboard > .admin-section {
+    padding: 18px !important;
+  }
+}
