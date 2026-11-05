@@ -831,3 +831,19 @@ main.adminwrap.admin-dashboard .admin-section label {
     padding: 18px !important;
   }
 }
+/* Force-reset: admin page-e hero panel-er style jate kono vabei na ashe */
+.adminwrap .panel,
+.admin-dashboard .panel,
+.admin-section.panel {
+  position: static !important;
+  transform: none !important;
+  width: 100% !important;
+  height: auto !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  background: #ffffff !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 15px !important;
+}
