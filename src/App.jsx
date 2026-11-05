@@ -1,262 +1,292 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Link, Routes, Route, useParams
+  Link,
+  Routes,
+  Route,
+  useParams,
+  useNavigate
 } from 'react-router-dom';
 
 import {
-  BookOpen, Sun, Calculator, ShieldCheck,
-  LogOut, Plus, Upload, Trash2, FileText,
-  ArrowLeft, Download, BatteryCharging,
-  Zap, Factory, PanelsTopLeft, PlayCircle
+  BookOpen,
+  Sun,
+  Calculator,
+  ShieldCheck,
+  LogIn,
+  LogOut,
+  Plus,
+  Upload,
+  Trash2,
+  FileText,
+  ArrowLeft,
+  Download,
+  BatteryCharging,
+  Zap,
+  Factory,
+  PanelsTopLeft,
+  PlayCircle,
+  Video,
+  RefreshCw,
+  GraduationCap,
+  Menu,
+  X,
+  ExternalLink
 } from 'lucide-react';
 
 import { supabase } from './supabase';
 
-const fallbackSections = [
-  { id:'basics', title:'Solar PV Fundamentals', description:'Solar energy, PV cells, panels and system components.' },
-  { id:'design', title:'Solar System Design', description:'Load calculation, string sizing, cable sizing and SLD.' },
-  { id:'battery', title:'Solar Battery', description:'Battery types, capacity calculation and maintenance.' },
-  { id:'inverter', title:'Solar Inverter', description:'On-grid, off-grid, hybrid inverter and troubleshooting.' },
-  { id:'structure', title:'Solar Mounting Structure', description:'Rooftop, ground mounting, rails, clamps and foundations.' },
-  { id:'manufacturing', title:'Solar Panel Manufacturing', description:'Wafer, cell, module production and quality testing.' }
+const MODULES = [
+  {
+    slug: 'fundamentals',
+    title: 'Solar PV Fundamentals',
+    description: 'Learn solar energy basics, PV technology and electrical fundamentals.',
+    icon: Sun
+  },
+  {
+    slug: 'design',
+    title: 'Solar System Design',
+    description: 'Learn solar system sizing, calculations, SLD and PV system design.',
+    icon: Calculator
+  },
+  {
+    slug: 'battery',
+    title: 'Solar Battery',
+    description: 'Understand battery types, capacity, charging and maintenance.',
+    icon: BatteryCharging
+  },
+  {
+    slug: 'inverter',
+    title: 'Solar Inverter',
+    description: 'Learn inverter technology, working principles and troubleshooting.',
+    icon: Zap
+  },
+  {
+    slug: 'structure',
+    title: 'Solar Mounting Structure',
+    description: 'Understand mounting structures, installation and safety.',
+    icon: PanelsTopLeft
+  },
+  {
+    slug: 'manufacturing',
+    title: 'Solar Panel Manufacturing',
+    description: 'Explore solar module manufacturing and quality testing.',
+    icon: Factory
+  }
 ];
 
-const chapterData = {
-  basics: [
-    'Introduction to Solar Energy',
-    'Solar PV Effect',
-    'Solar Cell and Module',
-    'Types of Solar Panels',
-    'Solar PV System Components'
-  ],
-  design: [
-    'Electrical Load Calculation',
-    'Solar Plant Capacity Calculation',
-    'Solar Panel String Sizing',
-    'DC Cable and AC Cable Sizing',
-    'DCDB and ACDB Selection',
-    'Single Line Diagram (SLD)',
-    'Earthing and Lightning Protection'
-  ],
-  battery: [
-    'Battery Fundamentals',
-    'Lead Acid Battery',
-    'Lithium-ion Battery',
-    'Battery Capacity Calculation',
-    'Battery Charging and Discharging',
-    'Battery Maintenance and Safety'
-  ],
-  inverter: [
-    'Inverter Fundamentals',
-    'On-grid Inverter',
-    'Off-grid Inverter',
-    'Hybrid Inverter',
-    'MPPT Technology',
-    'Inverter Troubleshooting'
-  ],
-  structure: [
-    'Rooftop Mounting Structure',
-    'Ground Mounted Structure',
-    'Rails and Clamps',
-    'Structure Spacing and Tilt Angle',
-    'Foundation and Ballast',
-    'Installation Safety'
-  ],
-  manufacturing: [
-    'Solar Manufacturing Overview',
-    'Silicon Wafer Production',
-    'Solar Cell Manufacturing',
-    'Solar Module Assembly',
-    'EL Testing and Flash Testing',
-    'Quality Control'
-  ]
+const styles = {
+  page: {
+    minHeight: '100vh',
+    background: '#f5f8f6',
+    color: '#18352a'
+  },
+  container: {
+    maxWidth: '1150px',
+    margin: 'auto',
+    padding: '25px 20px'
+  },
+  card: {
+    background: '#fff',
+    border: '1px solid #e1ebe5',
+    borderRadius: '16px',
+    padding: '22px',
+    boxShadow: '0 5px 18px rgba(20,70,45,.06)'
+  },
+  button: {
+    background: '#087b48',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '9px',
+    padding: '11px 18px',
+    cursor: 'pointer',
+    fontWeight: '600'
+  },
+  input: {
+    width: '100%',
+    padding: '12px',
+    border: '1px solid #d5e1d9',
+    borderRadius: '8px',
+    marginTop: '7px',
+    marginBottom: '14px',
+    boxSizing: 'border-box'
+  }
 };
 
 function Header() {
-  return (
-    <header className="top">
-      <Link to="/" className="brand">
-        <span className="brandicon"><Sun /></span>
-        <span>
-          Solar Learning Hub
-          <small>Learn • Design • Install • Maintain</small>
-        </span>
-      </Link>
+  const [menu, setMenu] = useState(false);
 
-      <nav>
-        <Link to="/">Home</Link>
-        <a href="/#modules">Study Modules</a>
-        <a href="/#tools">Tools</a>
-      </nav>
+  return (
+    <header style={{
+      background: '#073d2a',
+      color: 'white',
+      padding: '15px 20px'
+    }}>
+      <div style={{
+        maxWidth: '1150px',
+        margin: 'auto',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '15px'
+      }}>
+        <Link to="/" style={{
+          color: 'white',
+          textDecoration: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px'
+        }}>
+          <Sun size={30} />
+          <div>
+            <div style={{ fontSize: '21px', fontWeight: '800' }}>
+              Solar Learning Hub
+            </div>
+            <small style={{ color: '#bcebd1' }}>
+              Learn • Design • Install
+            </small>
+          </div>
+        </Link>
+
+        <button
+          onClick={() => setMenu(!menu)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            color: 'white',
+            cursor: 'pointer'
+          }}
+        >
+          {menu ? <X /> : <Menu />}
+        </button>
+
+        <nav style={{
+          display: menu ? 'flex' : 'none',
+          width: '100%',
+          gap: '20px',
+          flexWrap: 'wrap'
+        }}>
+          <Link to="/" style={navStyle}>Home</Link>
+          <Link to="/calculator" style={navStyle}>Calculator</Link>
+          <Link to="/admin" style={navStyle}>Admin Login</Link>
+        </nav>
+      </div>
     </header>
   );
 }
 
+const navStyle = {
+  color: 'white',
+  textDecoration: 'none',
+  fontWeight: '600'
+};
+
 function Home() {
-  const [sections, setSections] = useState(fallbackSections);
-  const [materials, setMaterials] = useState([]);
-
-  useEffect(() => {
-    if (!supabase) return;
-
-    async function loadData() {
-      const { data } = await supabase
-        .from('sections')
-        .select('*')
-        .eq('published', true)
-        .order('sort_order');
-
-      if (data?.length) setSections(data);
-
-      const { data: materialData } = await supabase
-        .from('materials')
-        .select('*')
-        .eq('published', true)
-        .order('created_at', { ascending: false })
-        .limit(6);
-
-      setMaterials(materialData || []);
-    }
-
-    loadData();
-  }, []);
-
-  const icons = [
-    Sun, PanelsTopLeft, BatteryCharging,
-    Zap, PanelsTopLeft, Factory
-  ];
-
   return (
-    <>
-      <section className="hero">
-        <div>
-          <div className="eyebrow">A PRACTICAL LEARNING PLATFORM</div>
+    <main style={styles.container}>
+      <section style={{
+        background: 'linear-gradient(120deg,#075b38,#11965b)',
+        color: 'white',
+        padding: '55px 30px',
+        borderRadius: '20px',
+        marginBottom: '35px'
+      }}>
+        <h1 style={{ fontSize: 'clamp(28px,5vw,44px)', margin: '0 0 15px' }}>
+          Welcome to Solar Learning Hub
+        </h1>
 
-          <h1>
-            Build your future
-            <br />
-            <em>with solar energy.</em>
-          </h1>
+        <p style={{ maxWidth: '650px', lineHeight: '1.8', fontSize: '17px' }}>
+          A learning platform for ITI, Diploma and Electrical Engineering
+          students to understand solar PV technology, system design,
+          installation and maintenance.
+        </p>
 
-          <p>
-            Simple and practical learning resources for ITI,
-            Diploma and Electrical students.
-          </p>
-
-          <div className="actions">
-            <a className="btn primary" href="#modules">
-              Explore learning modules
-            </a>
-          </div>
-        </div>
-
-        <div className="heroart">
-          <div className="sunball" />
-          <div className="panel p1" />
-          <div className="panel p2" />
-          <div className="panel p3" />
-          <div className="panel p4" />
-          <div className="hill" />
-        </div>
+        <a href="#modules" style={{
+          display: 'inline-block',
+          background: 'white',
+          color: '#087b48',
+          padding: '12px 22px',
+          borderRadius: '8px',
+          textDecoration: 'none',
+          fontWeight: '700',
+          marginTop: '12px'
+        }}>
+          Explore Courses
+        </a>
       </section>
 
-      <section className="stats">
-        <div><b>Learn</b><span>Clear explanations</span></div>
-        <div><b>Practice</b><span>Technical knowledge</span></div>
-        <div><b>Grow</b><span>Career-ready skills</span></div>
-      </section>
+      <div id="modules">
+        <h2 style={{ fontSize: '28px' }}>Study Modules</h2>
+        <p style={{ color: '#64756b' }}>
+          Select a module to access chapters and study materials.
+        </p>
 
-      <section id="modules" className="section">
-        <div className="sectionhead">
-          <div>
-            <div className="eyebrow">START LEARNING</div>
-            <h2>Study Modules</h2>
-          </div>
-          <span className="muted">Explore the fundamentals step by step</span>
-        </div>
-
-        <div className="grid">
-          {sections.map((s, i) => {
-            const Icon = icons[i % icons.length];
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))',
+          gap: '20px',
+          marginTop: '25px'
+        }}>
+          {MODULES.map((module) => {
+            const Icon = module.icon;
 
             return (
               <Link
-                to={`/modules/${s.id}`}
-                className="card"
-                key={s.id}
+                key={module.slug}
+                to={`/modules/${module.slug}`}
+                style={{ textDecoration: 'none', color: 'inherit' }}
               >
-                <div className="cardicon"><Icon /></div>
+                <div
+                  style={{
+                    ...styles.card,
+                    minHeight: '180px',
+                    transition: 'transform .2s',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <Icon size={38} color="#07864e" />
 
-                <span className="number">
-                  MODULE {String(i + 1).padStart(2, '0')}
-                </span>
+                  <h3>{module.title}</h3>
 
-                <h3>{s.title}</h3>
-                <p>{s.description}</p>
+                  <p style={{
+                    color: '#64756b',
+                    lineHeight: '1.6'
+                  }}>
+                    {module.description}
+                  </p>
 
-                <span className="download">Explore Module →</span>
+                  <span style={{
+                    color: '#087b48',
+                    fontWeight: '700'
+                  }}>
+                    Explore Module →
+                  </span>
+                </div>
               </Link>
             );
           })}
         </div>
+      </div>
+
+      <section style={{
+        ...styles.card,
+        marginTop: '40px',
+        textAlign: 'center'
+      }}>
+        <GraduationCap size={38} color="#07864e" />
+        <h2>Learn Solar Technology</h2>
+        <p style={{ color: '#64756b' }}>
+          Study materials, technical knowledge and practical learning
+          resources in one place.
+        </p>
       </section>
-
-      <section className="section tinted" id="tools">
-        <div className="sectionhead">
-          <div>
-            <div className="eyebrow">LEARNING TOOLS</div>
-            <h2>Quick Solar Calculators</h2>
-          </div>
-        </div>
-
-        <div className="grid two">
-          <CalculatorCard />
-          <DailyCard />
-        </div>
-      </section>
-
-      <section className="section">
-        <div className="sectionhead">
-          <div>
-            <div className="eyebrow">RESOURCE LIBRARY</div>
-            <h2>Latest Study Materials</h2>
-          </div>
-        </div>
-
-        {materials.length ? (
-          <div className="grid">
-            {materials.map(m => (
-              <a
-                className="card material"
-                key={m.id}
-                href={m.file_url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {m.file_path ? <FileText /> : <PlayCircle />}
-                <h3>{m.title}</h3>
-                <p>{m.description}</p>
-                <span className="download">Open Material ↗</span>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <div className="empty">
-            Study materials will appear here after the administrator uploads them.
-          </div>
-        )}
-      </section>
-
-      <footer>
-        © {new Date().getFullYear()} Solar Learning Hub
-        <span>Made for practical solar learning.</span>
-      </footer>
-    </>
+    </main>
   );
 }
 
 function ModulePage() {
   const { id } = useParams();
+  const module = MODULES.find(item => item.slug === id);
 
   const [section, setSection] = useState(null);
   const [chapters, setChapters] = useState([]);
@@ -271,468 +301,692 @@ function ModulePage() {
       setLoading(true);
       setError('');
 
-      let selected = null;
-
-      if (/^\d+$/.test(id) && supabase) {
-        const { data, error: sectionError } = await supabase
-          .from('sections')
-          .select('*')
-          .eq('id', Number(id))
-          .eq('published', true)
-          .maybeSingle();
-
-        if (sectionError) {
-          if (active) setError(sectionError.message);
-        }
-
-        selected = data || null;
-      } else {
-        selected = fallbackSections.find(
-          s => String(s.id) === id
-        ) || null;
+      if (!supabase) {
+        setError('Database connection is not configured.');
+        setLoading(false);
+        return;
       }
+
+      const { data: sectionData, error: sectionError } = await supabase
+        .from('sections')
+        .select('*')
+        .eq('title', module?.title)
+        .eq('published', true)
+        .maybeSingle();
 
       if (!active) return;
 
-      setSection(selected);
-
-      if (selected && /^\d+$/.test(id) && supabase) {
-        const { data: chapterRows, error: chapterError } = await supabase
-          .from('chapters')
-          .select('*')
-          .eq('section_id', Number(id))
-          .eq('published', true)
-          .order('sort_order');
-
-        const { data: materialRows, error: materialError } = await supabase
-          .from('materials')
-          .select('*')
-          .eq('section_id', Number(id))
-          .eq('published', true)
-          .order('created_at', { ascending: false });
-
-        if (!active) return;
-
-        if (chapterError) setError(chapterError.message);
-        if (materialError) setError(materialError.message);
-
-        setChapters(chapterRows || []);
-        setMaterials(materialRows || []);
-      } else {
-        setChapters(
-          (chapterData[id] || []).map((title, index) => ({
-            id: `${id}-${index}`,
-            title,
-            description: 'Study this chapter and explore its learning resources.'
-          }))
-        );
+      if (sectionError || !sectionData) {
+        setSection(null);
+        setChapters([]);
         setMaterials([]);
+        setLoading(false);
+        return;
       }
 
-      if (active) setLoading(false);
+      setSection(sectionData);
+
+      const { data: chapterData, error: chapterError } = await supabase
+        .from('chapters')
+        .select('*')
+        .eq('section_id', sectionData.id)
+        .eq('published', true)
+        .order('sort_order', { ascending: true });
+
+      const { data: materialData, error: materialError } = await supabase
+        .from('materials')
+        .select('*')
+        .eq('section_id', sectionData.id)
+        .eq('published', true)
+        .order('created_at', { ascending: false });
+
+      if (!active) return;
+
+      if (chapterError || materialError) {
+        setError('Unable to load study materials.');
+      }
+
+      setChapters(chapterData || []);
+      setMaterials(materialData || []);
+      setLoading(false);
     }
 
-    loadModule();
+    if (module) loadModule();
 
     return () => {
       active = false;
     };
-  }, [id]);
+  }, [id, module?.title]);
 
-  if (loading) {
-    return <main className="section">Loading module...</main>;
-  }
-
-  if (!section) {
-    return (
-      <main className="section">
-        <h1>Module not found</h1>
-        <Link to="/" className="btn ghost">
-          <ArrowLeft size={16} /> Back to Home
-        </Link>
-      </main>
-    );
+  if (!module) {
+    return <div style={styles.container}>Module not found.</div>;
   }
 
   return (
-    <main className="section">
-      <Link to="/" className="btn ghost">
-        <ArrowLeft size={16} /> Back to Home
+    <main style={styles.container}>
+      <Link to="/" style={{
+        color: '#087b48',
+        textDecoration: 'none',
+        fontWeight: '700'
+      }}>
+        <ArrowLeft size={17} style={{ verticalAlign: 'middle' }} /> Back to Home
       </Link>
 
-      <div style={{ marginTop: 30 }}>
-        <div className="eyebrow">STUDY MODULE</div>
+      <section style={{ ...styles.card, marginTop: '20px' }}>
+        <h1>{module.title}</h1>
+        <p style={{ color: '#64756b' }}>{module.description}</p>
+      </section>
 
-        <h1>{section.title}</h1>
-        <p>{section.description}</p>
+      {loading ? (
+        <p>Loading study materials...</p>
+      ) : error ? (
+        <p style={{ color: 'red' }}>{error}</p>
+      ) : !section ? (
+        <div style={{ ...styles.card, marginTop: '20px' }}>
+          <p>Study materials for this module have not been published yet.</p>
+        </div>
+      ) : (
+        <>
+          {chapters.length === 0 && materials.length === 0 && (
+            <div style={{ ...styles.card, marginTop: '20px' }}>
+              No chapters or study materials available yet.
+            </div>
+          )}
 
-        <h2 style={{ marginTop: 35 }}>Chapters</h2>
+          {chapters.map(chapter => {
+            const chapterMaterials = materials.filter(
+              item => String(item.chapter_id) === String(chapter.id)
+            );
 
-        {chapters.length ? (
-          <div className="grid">
-            {chapters.map((c, i) => (
-              <div className="card" key={c.id}>
-                <span className="number">
-                  CHAPTER {String(i + 1).padStart(2, '0')}
-                </span>
-                <h3>{c.title}</h3>
-                <p>{c.description}</p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="empty">
-            No chapters have been added to this module yet.
-          </div>
-        )}
+            return (
+              <section key={chapter.id} style={{
+                ...styles.card,
+                marginTop: '22px'
+              }}>
+                <h2>
+                  <BookOpen
+                    size={22}
+                    color="#087b48"
+                    style={{ verticalAlign: 'middle' }}
+                  />{' '}
+                  {chapter.title}
+                </h2>
 
-        <h2 style={{ marginTop: 35 }}>Study Materials</h2>
+                <p style={{ color: '#64756b' }}>
+                  {chapter.description}
+                </p>
 
-        {error && <p className="message">{error}</p>}
+                {chapterMaterials.map(item => (
+                  <MaterialCard key={item.id} item={item} />
+                ))}
 
-        {materials.length ? (
-          <div className="grid">
-            {materials.map(m => (
-              <a
-                className="card material"
-                key={m.id}
-                href={m.file_url}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {m.file_path ? <FileText /> : <PlayCircle />}
-                <h3>{m.title}</h3>
-                <p>{m.description}</p>
-                <span className="download">
-                  <Download size={16} /> Open Material ↗
-                </span>
-              </a>
-            ))}
-          </div>
-        ) : (
-          <div className="empty">
-            No study materials available in this module yet.
-          </div>
-        )}
-      </div>
+                {chapterMaterials.length === 0 && (
+                  <p style={{ color: '#89958e' }}>
+                    No materials added to this chapter.
+                  </p>
+                )}
+              </section>
+            );
+          })}
+
+          {materials.filter(item => !item.chapter_id).length > 0 && (
+            <section style={{
+              ...styles.card,
+              marginTop: '22px'
+            }}>
+              <h2>Other Study Materials</h2>
+
+              {materials.filter(item => !item.chapter_id).map(item => (
+                <MaterialCard key={item.id} item={item} />
+              ))}
+            </section>
+          )}
+        </>
+      )}
     </main>
   );
 }
 
-function CalculatorCard() {
-  const [kw, setKw] = useState(1);
+function MaterialCard({ item }) {
+  const isVideo = item.file_url?.includes('youtube.com') ||
+                  item.file_url?.includes('youtu.be');
 
   return (
-    <div className="toolcard">
-      <Calculator />
-      <h3>Solar PV Size Estimator</h3>
-      <p>Estimate approximate panel count using 550 W modules.</p>
+    <div style={{
+      borderTop: '1px solid #e4ece7',
+      padding: '15px 0',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: '12px'
+    }}>
+      <div>
+        <strong>{isVideo ? <PlayCircle size={17} /> : <FileText size={17} />}{' '}
+          {item.title}
+        </strong>
 
-      <label>
-        Required capacity (kW)
-        <input
-          type="number"
-          min="0.1"
-          step="0.1"
-          value={kw}
-          onChange={e => setKw(e.target.value)}
-        />
-      </label>
-
-      <div className="result">
-        Approx. modules:
-        <b>{Math.ceil((Number(kw) || 0) * 1000 / 550)}</b>
+        {item.description && (
+          <p style={{ margin: '5px 0', color: '#64756b' }}>
+            {item.description}
+          </p>
+        )}
       </div>
+
+      <a
+        href={item.file_url}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          ...styles.button,
+          textDecoration: 'none',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '7px'
+        }}
+      >
+        {isVideo ? <PlayCircle size={17} /> : <Download size={17} />}
+        {isVideo ? 'Watch Video' : 'Open Material'}
+      </a>
     </div>
   );
 }
 
-function DailyCard() {
-  const [kw, setKw] = useState(1);
-  const [sun, setSun] = useState(4.5);
+function CalculatorPage() {
+  const [watt, setWatt] = useState('550');
+  const [quantity, setQuantity] = useState('10');
+
+  const total = Number(watt) * Number(quantity);
 
   return (
-    <div className="toolcard">
-      <Sun />
-      <h3>Daily Generation Estimator</h3>
-      <p>Indicative estimate; actual output depends on location and losses.</p>
+    <main style={styles.container}>
+      <section style={styles.card}>
+        <h1><Calculator size={28} /> Solar Capacity Calculator</h1>
 
-      <div className="inputs">
-        <label>
-          System size (kW)
-          <input
-            type="number"
-            min="0"
-            step=".1"
-            value={kw}
-            onChange={e => setKw(e.target.value)}
-          />
-        </label>
+        <label>Solar Panel Capacity (Watt)</label>
+        <input
+          style={styles.input}
+          type="number"
+          min="1"
+          value={watt}
+          onChange={e => setWatt(e.target.value)}
+        />
 
-        <label>
-          Peak sun hours
-          <input
-            type="number"
-            min="0"
-            step=".1"
-            value={sun}
-            onChange={e => setSun(e.target.value)}
-          />
-        </label>
-      </div>
+        <label>Number of Solar Panels</label>
+        <input
+          style={styles.input}
+          type="number"
+          min="1"
+          value={quantity}
+          onChange={e => setQuantity(e.target.value)}
+        />
 
-      <div className="result">
-        Estimated energy:
-        <b>{(Number(kw) * Number(sun) * 0.8).toFixed(2)} kWh/day</b>
-      </div>
-    </div>
+        <h2 style={{ color: '#087b48' }}>
+          Total Capacity: {total > 0 ? (total / 1000).toFixed(2) : '0.00'} kW
+        </h2>
+
+        <p style={{ color: '#64756b' }}>
+          Calculation: Panel Watt × Number of Panels ÷ 1000
+        </p>
+      </section>
+    </main>
   );
 }
 
 function Admin() {
-  const [session, setSession] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [allowed, setAllowed] = useState(false);
+  const navigate = useNavigate();
 
-  const [sectionTitle, setSectionTitle] = useState('');
-  const [sectionDesc, setSectionDesc] = useState('');
+  const [session, setSession] = useState(null);
+  const [checking, setChecking] = useState(true);
+  const [allowed, setAllowed] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [sections, setSections] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  const [materials, setMaterials] = useState([]);
+
+  const [chapterSection, setChapterSection] = useState('');
+  const [materialSection, setMaterialSection] = useState('');
+  const [selectedChapter, setSelectedChapter] = useState('');
 
   const [chapterTitle, setChapterTitle] = useState('');
   const [chapterDesc, setChapterDesc] = useState('');
-  const [chapterSection, setChapterSection] = useState('');
 
-  const [title, setTitle] = useState('');
-  const [desc, setDesc] = useState('');
-  const [selectedSection, setSelectedSection] = useState('');
-  const [selectedChapter, setSelectedChapter] = useState('');
+  const [fileTitle, setFileTitle] = useState('');
+  const [fileDesc, setFileDesc] = useState('');
+  const [selectedFile, setSelectedFile] = useState(null);
+
+  const [videoTitle, setVideoTitle] = useState('');
+  const [videoDesc, setVideoDesc] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
 
-  const [sectionList, setSectionList] = useState([]);
-  const [chapterList, setChapterList] = useState([]);
-  const [rows, setRows] = useState([]);
-  const [msg, setMsg] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!supabase) {
-      setLoading(false);
+      setChecking(false);
+      setError('Supabase connection is missing.');
       return;
     }
 
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      setLoading(false);
+      if (!data.session) setChecking(false);
     });
 
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, newSession) => {
+        setSession(newSession);
+        if (!newSession) {
+          setAllowed(false);
+          setChecking(false);
+        }
+      }
+    );
 
-    return () => subscription.unsubscribe();
+    return () => listener.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
-    if (!session || !supabase) {
-      setAllowed(false);
-      return;
+    let active = true;
+
+    async function checkAdmin() {
+      if (!session) {
+        setAllowed(false);
+        setChecking(false);
+        return;
+      }
+
+      setChecking(true);
+
+      const { data, error: rpcError } = await supabase.rpc('is_site_admin');
+
+      if (!active) return;
+
+      if (rpcError || data !== true) {
+        setAllowed(false);
+        setError('Your account is not authorised as an administrator.');
+      } else {
+        setAllowed(true);
+        setError('');
+        await loadData();
+      }
+
+      if (active) setChecking(false);
     }
 
-    supabase.rpc('is_site_admin').then(({ data, error }) => {
-      if (error) {
-        setMsg(error.message);
-        setAllowed(false);
-      } else {
-        setAllowed(!!data);
-      }
-    });
+    checkAdmin();
+
+    return () => {
+      active = false;
+    };
   }, [session]);
 
   async function loadData() {
-    if (!supabase) return;
+    const [sectionResult, chapterResult, materialResult] = await Promise.all([
+      supabase.from('sections').select('*').order('sort_order'),
+      supabase.from('chapters').select('*').order('sort_order'),
+      supabase.from('materials').select('*').order('created_at', { ascending: false })
+    ]);
 
-    const [{ data: sections }, { data: chapters }, { data: materials }] =
-      await Promise.all([
-        supabase.from('sections').select('*').order('sort_order'),
-        supabase.from('chapters').select('*').order('sort_order'),
-        supabase.from('materials').select('*').order('created_at', { ascending: false })
-      ]);
+    if (sectionResult.error) {
+      setError(sectionResult.error.message);
+      return;
+    }
 
-    setSectionList(sections || []);
-    setChapterList(chapters || []);
-    setRows(materials || []);
+    setSections(sectionResult.data || []);
+    setChapters(chapterResult.data || []);
+    setMaterials(materialResult.data || []);
+
+    if (!chapterSection && sectionResult.data?.length) {
+      setChapterSection(String(sectionResult.data[0].id));
+    }
+
+    if (!materialSection && sectionResult.data?.length) {
+      setMaterialSection(String(sectionResult.data[0].id));
+    }
   }
-
-  useEffect(() => {
-    if (allowed) loadData();
-  }, [allowed]);
 
   async function login(e) {
     e.preventDefault();
-    setMsg('');
+    setError('');
+    setMessage('');
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: e.target.email.value,
-      password: e.target.password.value
+    const { error: loginError } = await supabase.auth.signInWithPassword({
+      email,
+      password
     });
 
-    if (error) setMsg(error.message);
+    if (loginError) setError(loginError.message);
   }
 
-  async function addSection(e) {
-    e.preventDefault();
-    setMsg('');
+  async function logout() {
+    await supabase.auth.signOut();
+    setSession(null);
+    setAllowed(false);
+    navigate('/');
+  }
 
-    const { error } = await supabase
-      .from('sections')
-      .insert({
-        title: sectionTitle,
-        description: sectionDesc,
-        published: true
-      });
+  async function initializeModules() {
+    setSaving(true);
+    setError('');
+    setMessage('');
 
-    if (error) {
-      setMsg(error.message);
-    } else {
-      setSectionTitle('');
-      setSectionDesc('');
-      setMsg('Study module added successfully.');
-      loadData();
+    for (let i = 0; i < MODULES.length; i++) {
+      const module = MODULES[i];
+
+      const { data: existing } = await supabase
+        .from('sections')
+        .select('id')
+        .eq('title', module.title)
+        .maybeSingle();
+
+      if (!existing) {
+        const { error: insertError } = await supabase
+          .from('sections')
+          .insert({
+            title: module.title,
+            description: module.description,
+            published: true,
+            sort_order: i + 1
+          });
+
+        if (insertError) {
+          setError(insertError.message);
+          setSaving(false);
+          return;
+        }
+      }
     }
+
+    await loadData();
+    setMessage('Six study modules are ready.');
+    setSaving(false);
   }
 
   async function addChapter(e) {
     e.preventDefault();
-    setMsg('');
 
-    const { error } = await supabase
+    if (!chapterSection || !chapterTitle.trim()) {
+      setError('Select a module and enter a chapter title.');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    setMessage('');
+
+    const { error: insertError } = await supabase
       .from('chapters')
       .insert({
         section_id: Number(chapterSection),
-        title: chapterTitle,
-        description: chapterDesc,
-        published: true
+        title: chapterTitle.trim(),
+        description: chapterDesc.trim(),
+        published: true,
+        sort_order: chapters.length + 1
       });
 
-    if (error) {
-      setMsg(error.message);
+    if (insertError) {
+      setError(insertError.message);
     } else {
       setChapterTitle('');
       setChapterDesc('');
-      setMsg('Chapter added successfully.');
-      loadData();
+      setMessage('Chapter added successfully.');
+      await loadData();
     }
+
+    setSaving(false);
   }
 
-  async function upload(e) {
+  async function uploadMaterial(e) {
     e.preventDefault();
-    setMsg('');
 
-    const file = e.target.file.files[0];
-
-    if (!selectedSection || (!file && !videoUrl)) {
-      setMsg('Select a module and upload a file or enter a video URL.');
+    if (!fileTitle.trim() || !selectedFile || !materialSection) {
+      setError('Enter title, select module and choose a file.');
       return;
     }
 
-    let fileUrl = videoUrl;
-    let filePath = '';
+    const allowedExtensions = [
+      'pdf', 'ppt', 'pptx', 'doc', 'docx',
+      'png', 'jpg', 'jpeg'
+    ];
 
-    if (file) {
-      const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-      filePath = `${Date.now()}-${safe}`;
+    const extension = selectedFile.name.split('.').pop().toLowerCase();
 
-      const { error: uploadError } = await supabase
-        .storage.from('materials')
-        .upload(filePath, file);
-
-      if (uploadError) {
-        setMsg(uploadError.message);
-        return;
-      }
-
-      const { data } = supabase
-        .storage.from('materials')
-        .getPublicUrl(filePath);
-
-      fileUrl = data.publicUrl;
+    if (!allowedExtensions.includes(extension)) {
+      setError('Allowed formats: PDF, PPT, PPTX, DOC, DOCX, PNG, JPG.');
+      return;
     }
 
-    const { error } = await supabase
+    if (selectedFile.size > 20 * 1024 * 1024) {
+      setError('Maximum file size is 20 MB.');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    setMessage('');
+
+    const safeName = selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+    const filePath = `${Date.now()}-${safeName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('materials')
+      .upload(filePath, selectedFile);
+
+    if (uploadError) {
+      setError(uploadError.message);
+      setSaving(false);
+      return;
+    }
+
+    const { data: publicData } = supabase.storage
+      .from('materials')
+      .getPublicUrl(filePath);
+
+    const { error: insertError } = await supabase
       .from('materials')
       .insert({
-        title,
-        description: desc,
-        file_url: fileUrl,
-        file_path: filePath,
-        section_id: Number(selectedSection),
+        title: fileTitle.trim(),
+        description: fileDesc.trim(),
+        section_id: Number(materialSection),
         chapter_id: selectedChapter ? Number(selectedChapter) : null,
+        file_url: publicData.publicUrl,
+        file_path: filePath,
         published: true
       });
 
-    if (error) {
-      if (filePath) {
-        await supabase.storage.from('materials').remove([filePath]);
-      }
-      setMsg(error.message);
+    if (insertError) {
+      await supabase.storage.from('materials').remove([filePath]);
+      setError(insertError.message);
+    } else {
+      setFileTitle('');
+      setFileDesc('');
+      setSelectedFile(null);
+      document.getElementById('material-file').value = '';
+      setMessage('Study material uploaded successfully.');
+      await loadData();
+    }
+
+    setSaving(false);
+  }
+
+  async function addVideo(e) {
+    e.preventDefault();
+
+    if (!videoTitle.trim() || !videoUrl.trim() || !materialSection) {
+      setError('Enter video title, URL and select module.');
       return;
     }
 
-    setTitle('');
-    setDesc('');
-    setSelectedSection('');
-    setSelectedChapter('');
-    setVideoUrl('');
-    e.target.reset();
+    let parsedUrl;
 
-    setMsg('Study material uploaded successfully.');
-    loadData();
-  }
-
-  async function removeMaterial(m) {
-    if (!confirm(`Delete "${m.title}"?`)) return;
-
-    if (m.file_path) {
-      await supabase.storage.from('materials').remove([m.file_path]);
+    try {
+      parsedUrl = new URL(videoUrl);
+    } catch {
+      setError('Enter a valid YouTube URL.');
+      return;
     }
 
-    const { error } = await supabase
+    const host = parsedUrl.hostname.replace(/^www\./, '');
+
+    if (!['youtube.com', 'youtu.be', 'm.youtube.com'].includes(host)) {
+      setError('Only YouTube video links are allowed.');
+      return;
+    }
+
+    setSaving(true);
+    setError('');
+    setMessage('');
+
+    const { error: insertError } = await supabase
+      .from('materials')
+      .insert({
+        title: videoTitle.trim(),
+        description: videoDesc.trim(),
+        section_id: Number(materialSection),
+        chapter_id: selectedChapter ? Number(selectedChapter) : null,
+        file_url: parsedUrl.href,
+        file_path: null,
+        published: true
+      });
+
+    if (insertError) {
+      setError(insertError.message);
+    } else {
+      setVideoTitle('');
+      setVideoDesc('');
+      setVideoUrl('');
+      setMessage('YouTube video added successfully.');
+      await loadData();
+    }
+
+    setSaving(false);
+  }
+
+  async function deleteMaterial(item) {
+    if (!window.confirm(`Delete "${item.title}"?`)) return;
+
+    setSaving(true);
+    setError('');
+    setMessage('');
+
+    if (item.file_path) {
+      const { error: storageError } = await supabase.storage
+        .from('materials')
+        .remove([item.file_path]);
+
+      if (storageError) {
+        setError(storageError.message);
+        setSaving(false);
+        return;
+      }
+    }
+
+    const { error: deleteError } = await supabase
       .from('materials')
       .delete()
-      .eq('id', m.id);
+      .eq('id', item.id);
 
-    setMsg(error ? error.message : 'Material deleted.');
-    loadData();
+    if (deleteError) {
+      setError(deleteError.message);
+    } else {
+      setMessage('Material deleted successfully.');
+      await loadData();
+    }
+
+    setSaving(false);
   }
 
-  if (!supabase) {
-    return <main className="adminwrap">Supabase configuration is missing.</main>;
+  async function editMaterial(item) {
+    const newTitle = window.prompt('Enter new material title:', item.title);
+    if (newTitle === null || !newTitle.trim()) return;
+
+    const newDescription = window.prompt(
+      'Enter description:',
+      item.description || ''
+    );
+
+    if (newDescription === null) return;
+
+    setSaving(true);
+
+    const { error: updateError } = await supabase
+      .from('materials')
+      .update({
+        title: newTitle.trim(),
+        description: newDescription.trim()
+      })
+      .eq('id', item.id);
+
+    if (updateError) {
+      setError(updateError.message);
+    } else {
+      setMessage('Material updated successfully.');
+      await loadData();
+    }
+
+    setSaving(false);
   }
 
-  if (loading) {
-    return <main className="adminwrap">Loading...</main>;
+  const filteredChapters = chapters.filter(
+    item => String(item.section_id) === String(materialSection)
+  );
+
+  if (checking) {
+    return (
+      <main style={styles.container}>
+        <p>Checking administrator access...</p>
+      </main>
+    );
   }
 
   if (!session) {
     return (
-      <main className="adminwrap">
-        <form className="loginbox" onSubmit={login}>
-          <ShieldCheck size={34} />
-          <h1>Administrator Login</h1>
-          <p>Sign in with your administrator account.</p>
+      <main style={{
+        ...styles.container,
+        maxWidth: '480px',
+        paddingTop: '70px'
+      }}>
+        <form onSubmit={login} style={styles.card}>
+          <div style={{ textAlign: 'center' }}>
+            <ShieldCheck size={48} color="#087b48" />
+            <h1>Admin Login</h1>
+            <p style={{ color: '#64756b' }}>
+              Sign in to manage Solar Learning Hub.
+            </p>
+          </div>
 
-          <label>
-            Email
-            <input name="email" type="email" required />
-          </label>
+          <label>Email Address</label>
+          <input
+            style={styles.input}
+            type="email"
+            required
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+          />
 
-          <label>
-            Password
-            <input name="password" type="password" required />
-          </label>
+          <label>Password</label>
+          <input
+            style={styles.input}
+            type="password"
+            required
+            value={password}
+            onChange={e => setPassword(e.target.value)}
+          />
 
-          <button className="btn primary">Sign In</button>
-          {msg && <p className="message">{msg}</p>}
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+
+          <button
+            type="submit"
+            style={{ ...styles.button, width: '100%' }}
+          >
+            <LogIn size={17} /> Login
+          </button>
         </form>
       </main>
     );
@@ -740,13 +994,12 @@ function Admin() {
 
   if (!allowed) {
     return (
-      <main className="adminwrap">
-        <div className="loginbox">
-          <ShieldCheck size={34} />
-          <h1>Access Not Authorised</h1>
-          <p>{msg || 'This account is not registered as an administrator.'}</p>
-          <button className="btn ghost" onClick={() => supabase.auth.signOut()}>
-            Sign Out
+      <main style={styles.container}>
+        <div style={styles.card}>
+          <h2>Access Denied</h2>
+          <p>{error || 'This account is not authorised.'}</p>
+          <button style={styles.button} onClick={logout}>
+            Logout
           </button>
         </div>
       </main>
@@ -754,210 +1007,352 @@ function Admin() {
   }
 
   return (
-    <main className="adminwrap">
-      <div className="adminhead">
+    <main style={styles.container}>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '15px'
+      }}>
         <div>
-          <div className="eyebrow">CONTROL PANEL</div>
-          <h1>Website Administration</h1>
-          <p>Signed in as {session.user.email}</p>
+          <h1 style={{ marginBottom: '5px' }}>Admin Dashboard</h1>
+          <p style={{ color: '#64756b' }}>
+            Manage your Solar Learning Hub content.
+          </p>
         </div>
 
-        <button className="btn ghost" onClick={() => supabase.auth.signOut()}>
-          <LogOut size={16} /> Sign Out
+        <button style={{
+          ...styles.button,
+          background: '#b83232'
+        }} onClick={logout}>
+          <LogOut size={17} /> Logout
         </button>
       </div>
 
-      {msg && <p className="message">{msg}</p>}
+      {message && (
+        <div style={{
+          background: '#e3f8eb',
+          color: '#087b48',
+          padding: '13px',
+          borderRadius: '8px',
+          marginTop: '20px'
+        }}>
+          {message}
+        </div>
+      )}
 
-      <div className="admincols">
-        <form className="panel" onSubmit={addSection}>
-          <h2><Plus /> Add Study Module</h2>
+      {error && (
+        <div style={{
+          background: '#ffe8e8',
+          color: '#b42323',
+          padding: '13px',
+          borderRadius: '8px',
+          marginTop: '20px'
+        }}>
+          {error}
+        </div>
+      )}
 
-          <label>
-            Module Title
-            <input
-              value={sectionTitle}
-              onChange={e => setSectionTitle(e.target.value)}
-              required
-            />
-          </label>
+      {/* MODULES */}
 
-          <label>
-            Description
-            <textarea
-              value={sectionDesc}
-              onChange={e => setSectionDesc(e.target.value)}
-            />
-          </label>
+      <section style={{ ...styles.card, marginTop: '25px' }}>
+        <h2><BookOpen size={22} /> Study Modules</h2>
 
-          <button className="btn primary">Add Module</button>
-        </form>
+        <p style={{ color: '#64756b' }}>
+          Create the six standard study modules in your database.
+        </p>
 
-        <form className="panel" onSubmit={addChapter}>
-          <h2><BookOpen /> Add Chapter</h2>
+        <button
+          style={styles.button}
+          onClick={initializeModules}
+          disabled={saving}
+        >
+          <RefreshCw size={17} /> Initialize 6 Modules
+        </button>
 
-          <label>
-            Select Module
-            <select
-              value={chapterSection}
-              onChange={e => setChapterSection(e.target.value)}
-              required
-            >
-              <option value="">Select a module</option>
-              {sectionList.map(s => (
-                <option key={s.id} value={s.id}>{s.title}</option>
-              ))}
-            </select>
-          </label>
+        <p style={{ marginTop: '15px' }}>
+          Modules available: <strong>{sections.length}</strong>
+        </p>
 
-          <label>
-            Chapter Title
-            <input
-              value={chapterTitle}
-              onChange={e => setChapterTitle(e.target.value)}
-              required
-            />
-          </label>
-
-          <label>
-            Description
-            <textarea
-              value={chapterDesc}
-              onChange={e => setChapterDesc(e.target.value)}
-            />
-          </label>
-
-          <button className="btn primary">Add Chapter</button>
-        </form>
-
-        <form className="panel" onSubmit={upload}>
-          <h2><Upload /> Add Study Material</h2>
-
-          <label>
-            Select Module
-            <select
-              value={selectedSection}
-              onChange={e => {
-                setSelectedSection(e.target.value);
-                setSelectedChapter('');
-              }}
-              required
-            >
-              <option value="">Select a module</option>
-              {sectionList.map(s => (
-                <option key={s.id} value={s.id}>{s.title}</option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            Select Chapter
-            <select
-              value={selectedChapter}
-              onChange={e => setSelectedChapter(e.target.value)}
-            >
-              <option value="">All chapters / General</option>
-              {chapterList
-                .filter(c => String(c.section_id) === selectedSection)
-                .map(c => (
-                  <option key={c.id} value={c.id}>{c.title}</option>
-                ))}
-            </select>
-          </label>
-
-          <label>
-            Material Title
-            <input
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              required
-            />
-          </label>
-
-          <label>
-            Description
-            <input
-              value={desc}
-              onChange={e => setDesc(e.target.value)}
-            />
-          </label>
-
-          <label>
-            Upload PDF, PPT, DOC or Image
-            <input
-              name="file"
-              type="file"
-              accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg"
-            />
-          </label>
-
-          <label>
-            Or enter YouTube / Video URL
-            <input
-              type="url"
-              placeholder="https://www.youtube.com/watch?v=..."
-              value={videoUrl}
-              onChange={e => setVideoUrl(e.target.value)}
-            />
-          </label>
-
-          <button className="btn primary">Publish Material</button>
-        </form>
-      </div>
-
-      <section className="panel listpanel">
-        <h2><FileText /> Published Materials</h2>
-
-        {rows.map(m => (
-          <div className="row" key={m.id}>
-            <div>
-              <b>{m.title}</b>
-              <small>{m.description}</small>
-              <a href={m.file_url} target="_blank" rel="noreferrer">
-                View Material ↗
-              </a>
-            </div>
-
-            <button
-              className="iconbtn"
-              onClick={() => removeMaterial(m)}
-              aria-label="Delete"
-            >
-              <Trash2 />
-            </button>
+        {sections.map(section => (
+          <div key={section.id} style={{
+            padding: '9px 0',
+            borderTop: '1px solid #e5eee8'
+          }}>
+            {section.title}
           </div>
         ))}
-
-        {!rows.length && <p className="muted">No materials uploaded yet.</p>}
       </section>
 
-      <p className="securitynote">
-        <ShieldCheck />
-        Admin permissions are enforced by Supabase Row Level Security.
-      </p>
+      {/* ADD CHAPTER */}
+
+      <section style={{ ...styles.card, marginTop: '25px' }}>
+        <h2><Plus size={22} /> Add New Chapter</h2>
+
+        <form onSubmit={addChapter}>
+          <label>Select Study Module</label>
+          <select
+            style={styles.input}
+            value={chapterSection}
+            onChange={e => setChapterSection(e.target.value)}
+            required
+          >
+            <option value="">Select Module</option>
+            {sections.map(item => (
+              <option key={item.id} value={item.id}>
+                {item.title}
+              </option>
+            ))}
+          </select>
+
+          <label>Chapter Title</label>
+          <input
+            style={styles.input}
+            value={chapterTitle}
+            onChange={e => setChapterTitle(e.target.value)}
+            placeholder="Example: Solar Cell Working Principle"
+            required
+          />
+
+          <label>Chapter Description</label>
+          <textarea
+            style={styles.input}
+            rows="3"
+            value={chapterDesc}
+            onChange={e => setChapterDesc(e.target.value)}
+            placeholder="Enter chapter description"
+          />
+
+          <button style={styles.button} disabled={saving}>
+            <Plus size={17} /> Add Chapter
+          </button>
+        </form>
+      </section>
+
+      {/* MATERIAL SETTINGS */}
+
+      <section style={{ ...styles.card, marginTop: '25px' }}>
+        <h2><PanelsTopLeft size={22} /> Material Settings</h2>
+
+        <label>Select Study Module</label>
+        <select
+          style={styles.input}
+          value={materialSection}
+          onChange={e => {
+            setMaterialSection(e.target.value);
+            setSelectedChapter('');
+          }}
+        >
+          <option value="">Select Module</option>
+          {sections.map(item => (
+            <option key={item.id} value={item.id}>
+              {item.title}
+            </option>
+          ))}
+        </select>
+
+        <label>Select Chapter (Optional)</label>
+        <select
+          style={styles.input}
+          value={selectedChapter}
+          onChange={e => setSelectedChapter(e.target.value)}
+        >
+          <option value="">No Chapter / General Material</option>
+          {filteredChapters.map(item => (
+            <option key={item.id} value={item.id}>
+              {item.title}
+            </option>
+          ))}
+        </select>
+      </section>
+
+      {/* UPLOAD MATERIAL */}
+
+      <section style={{ ...styles.card, marginTop: '25px' }}>
+        <h2><Upload size={22} /> Upload Study Material</h2>
+
+        <form onSubmit={uploadMaterial}>
+          <label>Material Title</label>
+          <input
+            style={styles.input}
+            value={fileTitle}
+            onChange={e => setFileTitle(e.target.value)}
+            placeholder="Enter material title"
+            required
+          />
+
+          <label>Description</label>
+          <textarea
+            style={styles.input}
+            rows="3"
+            value={fileDesc}
+            onChange={e => setFileDesc(e.target.value)}
+            placeholder="Enter description"
+          />
+
+          <label>Select File</label>
+          <input
+            id="material-file"
+            style={styles.input}
+            type="file"
+            accept=".pdf,.ppt,.pptx,.doc,.docx,.png,.jpg,.jpeg"
+            onChange={e => setSelectedFile(e.target.files?.[0] || null)}
+            required
+          />
+
+          <small style={{ color: '#64756b' }}>
+            Supported: PDF, PPT, PPTX, DOC, DOCX, PNG, JPG. Maximum 20 MB.
+          </small>
+
+          <br /><br />
+
+          <button style={styles.button} disabled={saving}>
+            <Upload size={17} /> Upload Material
+          </button>
+        </form>
+      </section>
+
+      {/* YOUTUBE VIDEO */}
+
+      <section style={{ ...styles.card, marginTop: '25px' }}>
+        <h2><Video size={22} /> Add YouTube Video</h2>
+
+        <form onSubmit={addVideo}>
+          <label>Video Title</label>
+          <input
+            style={styles.input}
+            value={videoTitle}
+            onChange={e => setVideoTitle(e.target.value)}
+            placeholder="Enter video title"
+            required
+          />
+
+          <label>YouTube URL</label>
+          <input
+            style={styles.input}
+            type="url"
+            value={videoUrl}
+            onChange={e => setVideoUrl(e.target.value)}
+            placeholder="https://www.youtube.com/watch?v=..."
+            required
+          />
+
+          <label>Description</label>
+          <textarea
+            style={styles.input}
+            rows="3"
+            value={videoDesc}
+            onChange={e => setVideoDesc(e.target.value)}
+            placeholder="Enter video description"
+          />
+
+          <button style={styles.button} disabled={saving}>
+            <PlayCircle size={17} /> Add Video
+          </button>
+        </form>
+      </section>
+
+      {/* MANAGE MATERIALS */}
+
+      <section style={{ ...styles.card, marginTop: '25px' }}>
+        <h2><FileText size={22} /> Manage Study Materials</h2>
+
+        <p style={{ color: '#64756b' }}>
+          Total materials: {materials.length}
+        </p>
+
+        {materials.length === 0 && (
+          <p>No study materials available.</p>
+        )}
+
+        {materials.map(item => (
+          <div key={item.id} style={{
+            borderTop: '1px solid #e1ebe5',
+            padding: '15px 0',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div>
+              <strong>{item.title}</strong>
+              <p style={{ margin: '5px 0', color: '#64756b' }}>
+                {sections.find(s => s.id === item.section_id)?.title || 'Module'}
+              </p>
+              <small>{item.description}</small>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              gap: '8px',
+              flexWrap: 'wrap'
+            }}>
+              <button
+                style={styles.button}
+                onClick={() => window.open(item.file_url, '_blank')}
+              >
+                <ExternalLink size={15} /> View
+              </button>
+
+              <button
+                style={{ ...styles.button, background: '#2563a5' }}
+                onClick={() => editMaterial(item)}
+                disabled={saving}
+              >
+                Edit
+              </button>
+
+              <button
+                style={{ ...styles.button, background: '#bd3030' }}
+                onClick={() => deleteMaterial(item)}
+                disabled={saving}
+              >
+                <Trash2 size={15} /> Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </section>
+
+      <div style={{ textAlign: 'center', marginTop: '30px' }}>
+        <Link to="/" style={{
+          color: '#087b48',
+          textDecoration: 'none',
+          fontWeight: '700'
+        }}>
+          <ArrowLeft size={17} /> Back to Website
+        </Link>
+      </div>
     </main>
   );
 }
 
 export default function App() {
   return (
-    <>
+    <div style={styles.page}>
       <Header />
 
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/modules/:id" element={<ModulePage />} />
-        <Route
-          path="*"
-          element={
-            <main className="section">
-              <h1>Page Not Found</h1>
-              <Link to="/">Back to Home</Link>
-            </main>
-          }
-        />
+        <Route path="/calculator" element={<CalculatorPage />} />
+        <Route path="*" element={<Home />} />
       </Routes>
-    </>
+
+      <footer style={{
+        background: '#073d2a',
+        color: 'white',
+        padding: '25px',
+        textAlign: 'center',
+        marginTop: '40px'
+      }}>
+        <h3>Solar Learning Hub</h3>
+        <p>Solar Education for Future Engineers</p>
+        <small>© 2026 Solar Learning Hub. All Rights Reserved.</small>
+      </footer>
+    </div>
   );
 }
