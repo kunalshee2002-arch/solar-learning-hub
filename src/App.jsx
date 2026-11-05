@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { Link, Routes, Route } from 'react-router-dom';
+import {
+  Link,
+  Routes,
+  Route,
+  useParams
+} from 'react-router-dom';
+
 import {
   BookOpen,
   Sun,
@@ -9,7 +15,9 @@ import {
   Plus,
   Upload,
   Trash2,
-  FileText
+  FileText,
+  ArrowLeft,
+  Download
 } from 'lucide-react';
 
 import { supabase } from './supabase';
@@ -18,48 +26,30 @@ const fallbackSections = [
   {
     id: 'basics',
     title: 'Solar PV Fundamentals',
-    description:
-      'Understand sunlight, photovoltaic effect, modules and system components.'
+    description: 'Understand sunlight, photovoltaic effect, modules and system components.'
   },
   {
     id: 'design',
     title: 'Solar System Design',
-    description:
-      'Learn load assessment, module sizing, strings, inverters and cable selection.'
+    description: 'Learn load assessment, module sizing, strings, inverters and cable selection.'
   },
   {
     id: 'installation',
     title: 'Installation & Safety',
-    description:
-      'Study mounting structures, earthing, protection and safe work practices.'
+    description: 'Study mounting structures, earthing, protection and safe work practices.'
   },
   {
     id: 'maintenance',
     title: 'Operation & Maintenance',
-    description:
-      'Learn inspection, testing, troubleshooting and preventive maintenance.'
+    description: 'Learn inspection, testing, troubleshooting and preventive maintenance.'
   }
 ];
-
-function SetupNotice() {
-  return (
-    <div className="notice">
-      <b>Setup required:</b> Add your Supabase URL and publishable key
-      in the environment variables and run the SQL setup script.
-    </div>
-  );
-}
-
-/* PUBLIC WEBSITE HEADER - NO ADMIN BUTTON */
 
 function Header() {
   return (
     <header className="top">
       <Link to="/" className="brand">
-        <span className="brandicon">
-          <Sun />
-        </span>
-
+        <span className="brandicon"><Sun /></span>
         <span>
           Solar Learning Hub
           <small>Learn • Design • Install • Maintain</small>
@@ -75,8 +65,6 @@ function Header() {
   );
 }
 
-/* HOMEPAGE */
-
 function Home() {
   const [sections, setSections] = useState(fallbackSections);
   const [materials, setMaterials] = useState([]);
@@ -84,7 +72,7 @@ function Home() {
   useEffect(() => {
     if (!supabase) return;
 
-    async function loadContent() {
+    async function loadData() {
       const { data: sectionData } = await supabase
         .from('sections')
         .select('*')
@@ -104,7 +92,7 @@ function Home() {
       setMaterials(materialData || []);
     }
 
-    loadContent();
+    loadData();
   }, []);
 
   return (
@@ -122,9 +110,9 @@ function Home() {
           </h1>
 
           <p>
-            Simple, practical learning resources for ITI, Diploma
-            and Electrical students — from solar fundamentals
-            to installation and maintenance.
+            Simple, practical learning resources for ITI,
+            Diploma and Electrical students — from solar
+            fundamentals to installation and maintenance.
           </p>
 
           <div className="actions">
@@ -149,25 +137,21 @@ function Home() {
           <b>Learn</b>
           <span>Clear explanations</span>
         </div>
-
         <div>
           <b>Practice</b>
           <span>Technical knowledge</span>
         </div>
-
         <div>
           <b>Grow</b>
           <span>Career-ready skills</span>
         </div>
       </section>
 
-      {/* STUDY MODULES */}
-
       <section id="modules" className="section">
         <div className="sectionhead">
           <div>
             <div className="eyebrow">START LEARNING</div>
-            <h2>Study modules</h2>
+            <h2>Study Modules</h2>
           </div>
 
           <span className="muted">
@@ -177,7 +161,12 @@ function Home() {
 
         <div className="grid">
           {sections.map((s, i) => (
-            <article className="card" key={s.id}>
+            <Link
+              to={`/modules/${s.id}`}
+              className="card"
+              key={s.id}
+              style={{ textDecoration: 'none', cursor: 'pointer' }}
+            >
               <div className="cardicon">
                 <BookOpen />
               </div>
@@ -187,19 +176,22 @@ function Home() {
               </span>
 
               <h3>{s.title}</h3>
+
               <p>{s.description}</p>
-            </article>
+
+              <span className="download">
+                Explore Module →
+              </span>
+            </Link>
           ))}
         </div>
       </section>
-
-      {/* SOLAR CALCULATORS */}
 
       <section className="section tinted" id="tools">
         <div className="sectionhead">
           <div>
             <div className="eyebrow">LEARNING TOOLS</div>
-            <h2>Quick solar calculators</h2>
+            <h2>Quick Solar Calculators</h2>
           </div>
         </div>
 
@@ -209,13 +201,11 @@ function Home() {
         </div>
       </section>
 
-      {/* STUDY MATERIALS */}
-
       <section className="section">
         <div className="sectionhead">
           <div>
             <div className="eyebrow">RESOURCE LIBRARY</div>
-            <h2>Latest study materials</h2>
+            <h2>Latest Study Materials</h2>
           </div>
         </div>
 
@@ -230,13 +220,10 @@ function Home() {
                 rel="noreferrer"
               >
                 <FileText />
-
                 <h3>{m.title}</h3>
-
                 <p>{m.description}</p>
-
                 <span className="download">
-                  Open material ↗
+                  Open Material ↗
                 </span>
               </a>
             ))}
@@ -257,7 +244,153 @@ function Home() {
   );
 }
 
-/* SOLAR PV SIZE CALCULATOR */
+function ModulePage() {
+  const { id } = useParams();
+
+  const [section, setSection] = useState(null);
+  const [materials, setMaterials] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadModule() {
+      setLoading(true);
+      setError('');
+
+      if (!supabase) {
+        setSection(
+          fallbackSections.find(s => String(s.id) === id) || null
+        );
+        setMaterials([]);
+        setLoading(false);
+        return;
+      }
+
+      const { data: sectionData, error: sectionError } =
+        await supabase
+          .from('sections')
+          .select('*')
+          .eq('id', id)
+          .eq('published', true)
+          .maybeSingle();
+
+      if (!active) return;
+
+      if (sectionError) {
+        setError(sectionError.message);
+        setLoading(false);
+        return;
+      }
+
+      const selectedSection =
+        sectionData ||
+        fallbackSections.find(s => String(s.id) === id);
+
+      setSection(selectedSection || null);
+
+      if (sectionData) {
+        const { data: materialData, error: materialError } =
+          await supabase
+            .from('materials')
+            .select('*')
+            .eq('section_id', sectionData.id)
+            .eq('published', true)
+            .order('created_at', { ascending: false });
+
+        if (!active) return;
+
+        if (materialError) {
+          setError(materialError.message);
+        }
+
+        setMaterials(materialData || []);
+      } else {
+        setMaterials([]);
+      }
+
+      setLoading(false);
+    }
+
+    loadModule();
+
+    return () => {
+      active = false;
+    };
+  }, [id]);
+
+  if (loading) {
+    return (
+      <main className="section">
+        <p>Loading module...</p>
+      </main>
+    );
+  }
+
+  if (!section) {
+    return (
+      <main className="section">
+        <h1>Module not found</h1>
+        <Link to="/" className="btn ghost">
+          <ArrowLeft size={16} /> Back to Home
+        </Link>
+      </main>
+    );
+  }
+
+  return (
+    <main className="section">
+      <Link to="/" className="btn ghost">
+        <ArrowLeft size={16} /> Back to Home
+      </Link>
+
+      <div style={{ marginTop: 30 }}>
+        <div className="eyebrow">STUDY MODULE</div>
+
+        <h1>{section.title}</h1>
+
+        <p>{section.description}</p>
+
+        <h2 style={{ marginTop: 35 }}>
+          Study Materials
+        </h2>
+
+        {error && (
+          <p className="message">{error}</p>
+        )}
+
+        {materials.length ? (
+          <div className="grid">
+            {materials.map(m => (
+              <a
+                className="card material"
+                key={m.id}
+                href={m.file_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                <FileText />
+
+                <h3>{m.title}</h3>
+
+                <p>{m.description}</p>
+
+                <span className="download">
+                  <Download size={16} /> Open Material ↗
+                </span>
+              </a>
+            ))}
+          </div>
+        ) : (
+          <div className="empty">
+            No study materials available in this module yet.
+          </div>
+        )}
+      </div>
+    </main>
+  );
+}
 
 function CalculatorCard() {
   const [kw, setKw] = useState(1);
@@ -266,7 +399,7 @@ function CalculatorCard() {
     <div className="toolcard">
       <Calculator />
 
-      <h3>Solar PV size estimator</h3>
+      <h3>Solar PV Size Estimator</h3>
 
       <p>
         Estimate approximate panel count using 550 W modules.
@@ -294,8 +427,6 @@ function CalculatorCard() {
   );
 }
 
-/* DAILY GENERATION CALCULATOR */
-
 function DailyCard() {
   const [kw, setKw] = useState(1);
   const [sun, setSun] = useState(4.5);
@@ -304,11 +435,11 @@ function DailyCard() {
     <div className="toolcard">
       <Sun />
 
-      <h3>Daily generation estimator</h3>
+      <h3>Daily Generation Estimator</h3>
 
       <p>
-        Indicative estimate; actual output depends on location,
-        shading and losses.
+        Indicative estimate; actual output depends on
+        location, shading and losses.
       </p>
 
       <div className="inputs">
@@ -348,8 +479,6 @@ function DailyCard() {
   );
 }
 
-/* ADMIN PANEL */
-
 function Admin() {
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -361,10 +490,11 @@ function Admin() {
   const [sectionTitle, setSectionTitle] = useState('');
   const [sectionDesc, setSectionDesc] = useState('');
 
+  const [sectionList, setSectionList] = useState([]);
+  const [selectedSection, setSelectedSection] = useState('');
+
   const [rows, setRows] = useState([]);
   const [msg, setMsg] = useState('');
-
-  /* CHECK LOGIN SESSION */
 
   useEffect(() => {
     if (!supabase) {
@@ -379,66 +509,53 @@ function Admin() {
 
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
     });
 
     return () => subscription.unsubscribe();
   }, []);
 
-  /* CHECK ADMIN PERMISSION */
-
   useEffect(() => {
-    let active = true;
-
-    async function checkAdmin() {
-      if (!session || !supabase) {
-        setAllowed(false);
-        return;
-      }
-
-      const { data, error } = await supabase
-        .from('admin_users')
-        .select('user_id')
-        .eq('user_id', session.user.id)
-        .maybeSingle();
-
-      if (active) {
-        setAllowed(!error && !!data);
-      }
+    if (!session || !supabase) {
+      setAllowed(false);
+      return;
     }
 
-    checkAdmin();
-
-    return () => {
-      active = false;
-    };
+    supabase
+      .from('admin_users')
+      .select('user_id')
+      .eq('user_id', session.user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        setAllowed(!!data);
+      });
   }, [session]);
 
-  /* LOAD MATERIALS */
-
-  const load = async () => {
+  async function loadData() {
     if (!supabase) return;
 
-    const { data } = await supabase
-      .from('materials')
+    const { data: sectionData } = await supabase
+      .from('sections')
       .select('*')
+      .order('sort_order');
+
+    setSectionList(sectionData || []);
+
+    const { data: materialData } = await supabase
+      .from('materials')
+      .select('*, sections(title)')
       .order('created_at', { ascending: false });
 
-    setRows(data || []);
-  };
+    setRows(materialData || []);
+  }
 
   useEffect(() => {
-    if (allowed) {
-      load();
-    }
+    if (allowed) loadData();
   }, [allowed]);
-
-  /* ADMIN LOGIN */
 
   async function login(e) {
     e.preventDefault();
-
     setMsg('');
 
     const { error } = await supabase.auth.signInWithPassword({
@@ -446,66 +563,12 @@ function Admin() {
       password: e.target.password.value
     });
 
-    if (error) {
-      setMsg(error.message);
-    }
+    if (error) setMsg(error.message);
   }
-
-  /* UPLOAD STUDY MATERIAL */
-
-  async function upload(e) {
-    e.preventDefault();
-
-    const file = e.target.file.files[0];
-
-    if (!file) return;
-
-    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-
-    const path = `${Date.now()}-${safe}`;
-
-    const { error: upErr } = await supabase
-      .storage
-      .from('materials')
-      .upload(path, file);
-
-    if (upErr) {
-      setMsg(upErr.message);
-      return;
-    }
-
-    const {
-      data: { publicUrl }
-    } = supabase.storage
-      .from('materials')
-      .getPublicUrl(path);
-
-    const { error } = await supabase
-      .from('materials')
-      .insert({
-        title,
-        description: desc,
-        file_url: publicUrl,
-        file_path: path
-      });
-
-    if (error) {
-      setMsg(error.message);
-    } else {
-      setTitle('');
-      setDesc('');
-      e.target.reset();
-
-      setMsg('Material uploaded.');
-
-      load();
-    }
-  }
-
-  /* ADD STUDY SECTION */
 
   async function addSection(e) {
     e.preventDefault();
+    setMsg('');
 
     const { error } = await supabase
       .from('sections')
@@ -515,21 +578,83 @@ function Admin() {
         published: true
       });
 
-    setMsg(error ? error.message : 'Section added.');
-
-    if (!error) {
+    if (error) {
+      setMsg(error.message);
+    } else {
       setSectionTitle('');
       setSectionDesc('');
+      setMsg('Study section added successfully.');
+      loadData();
     }
   }
 
-  /* DELETE MATERIAL */
+  async function upload(e) {
+    e.preventDefault();
+    setMsg('');
+
+    const file = e.target.file.files[0];
+
+    if (!file || !selectedSection) {
+      setMsg('Please select a module and a file.');
+      return;
+    }
+
+    const safe = file.name.replace(
+      /[^a-zA-Z0-9._-]/g,
+      '_'
+    );
+
+    const path = `${Date.now()}-${safe}`;
+
+    const { error: uploadError } = await supabase
+      .storage
+      .from('materials')
+      .upload(path, file);
+
+    if (uploadError) {
+      setMsg(uploadError.message);
+      return;
+    }
+
+    const { data: publicData } = supabase
+      .storage
+      .from('materials')
+      .getPublicUrl(path);
+
+    const { error } = await supabase
+      .from('materials')
+      .insert({
+        title,
+        description: desc,
+        file_url: publicData.publicUrl,
+        file_path: path,
+        section_id: Number(selectedSection),
+        published: true
+      });
+
+    if (error) {
+      await supabase.storage
+        .from('materials')
+        .remove([path]);
+
+      setMsg(error.message);
+      return;
+    }
+
+    setTitle('');
+    setDesc('');
+    setSelectedSection('');
+    e.target.reset();
+
+    setMsg('Material uploaded successfully.');
+
+    loadData();
+  }
 
   async function removeMaterial(m) {
     if (!confirm(`Delete "${m.title}"?`)) return;
 
-    await supabase
-      .storage
+    await supabase.storage
       .from('materials')
       .remove([m.file_path]);
 
@@ -540,23 +665,13 @@ function Admin() {
 
     setMsg(error ? error.message : 'Material deleted.');
 
-    load();
+    loadData();
   }
-
-  /* SIGN OUT */
-
-  async function logout() {
-    await supabase.auth.signOut();
-    setSession(null);
-    setAllowed(false);
-  }
-
-  /* RENDER ADMIN PANEL */
 
   if (!supabase) {
     return (
       <main className="adminwrap">
-        <SetupNotice />
+        Supabase configuration is missing.
       </main>
     );
   }
@@ -564,7 +679,7 @@ function Admin() {
   if (loading) {
     return (
       <main className="adminwrap">
-        Loading…
+        Loading...
       </main>
     );
   }
@@ -575,16 +690,14 @@ function Admin() {
         <form className="loginbox" onSubmit={login}>
           <ShieldCheck size={34} />
 
-          <h1>Administrator login</h1>
+          <h1>Administrator Login</h1>
 
           <p>
-            Sign in with the administrator account
-            created in Supabase.
+            Sign in with your administrator account.
           </p>
 
           <label>
             Email
-
             <input
               name="email"
               type="email"
@@ -594,7 +707,6 @@ function Admin() {
 
           <label>
             Password
-
             <input
               name="password"
               type="password"
@@ -603,7 +715,7 @@ function Admin() {
           </label>
 
           <button className="btn primary">
-            Sign in
+            Sign In
           </button>
 
           {msg && (
@@ -620,17 +732,18 @@ function Admin() {
         <div className="loginbox">
           <ShieldCheck size={34} />
 
-          <h1>Access not authorised</h1>
+          <h1>Access Not Authorised</h1>
 
           <p>
-            This account is not listed as a website administrator.
+            This account is not listed as a website
+            administrator.
           </p>
 
           <button
             className="btn ghost"
-            onClick={logout}
+            onClick={() => supabase.auth.signOut()}
           >
-            Sign out
+            Sign Out
           </button>
         </div>
       </main>
@@ -646,7 +759,7 @@ function Admin() {
             CONTROL PANEL
           </div>
 
-          <h1>Website administration</h1>
+          <h1>Website Administration</h1>
 
           <p>
             Signed in as {session.user.email}
@@ -655,10 +768,9 @@ function Admin() {
 
         <button
           className="btn ghost"
-          onClick={logout}
+          onClick={() => supabase.auth.signOut()}
         >
-          <LogOut size={16} />
-          Sign out
+          <LogOut size={16} /> Sign Out
         </button>
       </div>
 
@@ -668,19 +780,16 @@ function Admin() {
 
       <div className="admincols">
 
-        {/* ADD SECTION */}
-
         <form
           className="panel"
           onSubmit={addSection}
         >
           <h2>
-            <Plus />
-            Add a study section
+            <Plus /> Add Study Module
           </h2>
 
           <label>
-            Section title
+            Module Title
 
             <input
               value={sectionTitle}
@@ -699,23 +808,43 @@ function Admin() {
           </label>
 
           <button className="btn primary">
-            Add section
+            Add Module
           </button>
         </form>
-
-        {/* UPLOAD MATERIAL */}
 
         <form
           className="panel"
           onSubmit={upload}
         >
           <h2>
-            <Upload />
-            Upload study material
+            <Upload /> Upload Study Material
           </h2>
 
           <label>
-            Material title
+            Select Study Module
+
+            <select
+              value={selectedSection}
+              onChange={e => setSelectedSection(e.target.value)}
+              required
+            >
+              <option value="">
+                Select a module
+              </option>
+
+              {sectionList.map(s => (
+                <option
+                  key={s.id}
+                  value={s.id}
+                >
+                  {s.title}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            Material Title
 
             <input
               value={title}
@@ -734,7 +863,7 @@ function Admin() {
           </label>
 
           <label>
-            Choose PDF, PPT, DOC or image
+            Choose PDF, PPT, DOC or Image
 
             <input
               name="file"
@@ -745,24 +874,37 @@ function Admin() {
           </label>
 
           <button className="btn primary">
-            Upload material
+            Upload Material
           </button>
         </form>
-      </div>
 
-      {/* PUBLISHED MATERIALS */}
+      </div>
 
       <section className="panel listpanel">
         <h2>
-          <FileText />
-          Published materials
+          <FileText /> Published Materials
         </h2>
 
         {rows.map(m => (
           <div className="row" key={m.id}>
             <div>
               <b>{m.title}</b>
-              <small>{m.description}</small>
+
+              <small>
+                {m.description}
+              </small>
+
+              <small>
+                Module: {m.sections?.title || 'Not assigned'}
+              </small>
+
+              <a
+                href={m.file_url}
+                target="_blank"
+                rel="noreferrer"
+              >
+                View Material ↗
+              </a>
             </div>
 
             <button
@@ -793,8 +935,6 @@ function Admin() {
   );
 }
 
-/* APPLICATION ROUTES */
-
 export default function App() {
   return (
     <>
@@ -803,9 +943,25 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
 
-        {/* ADMIN URL - NOT SHOWN ON PUBLIC HOMEPAGE */}
+        <Route
+          path="/admin"
+          element={<Admin />}
+        />
 
-        <Route path="/admin" element={<Admin />} />
+        <Route
+          path="/modules/:id"
+          element={<ModulePage />}
+        />
+
+        <Route
+          path="*"
+          element={
+            <main className="section">
+              <h1>Page Not Found</h1>
+              <Link to="/">Back to Home</Link>
+            </main>
+          }
+        />
       </Routes>
     </>
   );
