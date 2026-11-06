@@ -1,75 +1,33 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  UserCircle,
   BookOpen,
   FileText,
   GraduationCap,
+  UserCircle,
+  LogOut,
+  Save,
+  Edit,
+  CheckCircle,
+  Circle,
+  Eye,
+  Lock,
   Mail,
   Phone,
-  Edit,
-  Save,
-  LogOut,
-  Sun,
-  Lock,
+  RefreshCw,
   ArrowRight,
-  RefreshCw
+  Sun,
+  TrendingUp
 } from 'lucide-react';
 
 import { supabase } from './supabase';
 
-const styles = {
-  page: {
-    minHeight: '80vh',
-    padding: '35px 16px',
-    background: '#f4f7f5'
-  },
-  container: {
-    maxWidth: '1050px',
-    margin: 'auto'
-  },
-  card: {
-    background: '#fff',
-    padding: '25px',
-    borderRadius: '16px',
-    boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-    marginBottom: '22px'
-  },
-  input: {
-    width: '100%',
-    padding: '13px',
-    border: '1px solid #dce5df',
-    borderRadius: '8px',
-    marginTop: '7px',
-    marginBottom: '16px',
-    boxSizing: 'border-box',
-    fontSize: '15px'
-  },
-  button: {
-    width: '100%',
-    padding: '13px',
-    background: '#159447',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontSize: '15px',
-    fontWeight: 'bold'
-  },
-  secondaryButton: {
-    padding: '10px 15px',
-    background: '#eaf6ee',
-    color: '#159447',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: 'bold'
-  }
-};
-
 export default function StudentAuth() {
   const [mode, setMode] = useState('login');
   const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
 
   const [profile, setProfile] = useState({
     full_name: '',
@@ -77,141 +35,156 @@ export default function StudentAuth() {
     education: ''
   });
 
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [sections, setSections] = useState([]);
+  const [chapters, setChapters] = useState([]);
+  const [materials, setMaterials] = useState([]);
+
+  const [completedChapters, setCompletedChapters] = useState([]);
+  const [viewedMaterials, setViewedMaterials] = useState([]);
+
+  const [expandedSection, setExpandedSection] = useState(null);
+
   const [form, setForm] = useState({
     full_name: '',
     phone: '',
     education: '',
     email: '',
-    password: '',
-    confirmPassword: ''
+    password: ''
   });
 
-  const [sections, setSections] = useState([]);
-  const [materials, setMaterials] = useState([]);
-
-  const [loading, setLoading] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [editing, setEditing] = useState(false);
-  const [message, setMessage] = useState('');
+  const [resetEmail, setResetEmail] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   useEffect(() => {
-    if (!supabase) return;
-
-    let mounted = true;
-
-    async function initialize() {
-      const { data } = await supabase.auth.getSession();
-
-      if (!mounted) return;
-
-      setSession(data?.session || null);
-
-      if (data?.session?.user) {
-        loadProfile(data.session.user.id);
-        loadDashboard();
-      }
+    if (!supabase) {
+      setError('Supabase configuration missing.');
+      setLoading(false);
+      return;
     }
 
-    initialize();
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setLoading(false);
 
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((event, newSession) => {
-      if (!mounted) return;
-
-      setSession(newSession);
-
-      if (event === 'PASSWORD_RECOVERY') {
-        setMode('reset');
-      }
-
-      if (newSession?.user) {
-        setTimeout(() => {
-          if (!mounted) return;
-          loadProfile(newSession.user.id);
-          loadDashboard();
-        }, 0);
+      if (data.session) {
+        loadDashboard(data.session);
       }
     });
 
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        setSession(newSession);
+
+        if (event === 'PASSWORD_RECOVERY') {
+          setMode('reset');
+        }
+
+        if (newSession && event !== 'PASSWORD_RECOVERY') {
+          setTimeout(() => loadDashboard(newSession), 0);
+        }
+      }
+    );
+
+    return () => listener.subscription.unsubscribe();
   }, []);
 
-  async function loadProfile(userId) {
-    if (!supabase) return;
-
-    setProfileLoading(true);
-
-    const { data, error } = await supabase
-      .from('student_profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
-    if (!error && data) {
-      setProfile({
-        full_name: data.full_name || '',
-        phone: data.phone || '',
-        education: data.education || ''
-      });
-    }
-
-    setProfileLoading(false);
-  }
-
-  async function loadDashboard() {
-    if (!supabase) return;
-
-    const [sectionResult, materialResult] = await Promise.all([
-      supabase
-        .from('sections')
-        .select('id,title,description')
-        .eq('published', true)
-        .order('sort_order'),
-
-      supabase
-        .from('materials')
-        .select('id,title,description,file_url,created_at,section_id')
-        .eq('published', true)
-        .order('created_at', { ascending: false })
-        .limit(5)
-    ]);
-
-    if (!sectionResult.error) {
-      setSections(sectionResult.data || []);
-    }
-
-    if (!materialResult.error) {
-      setMaterials(materialResult.data || []);
-    }
-  }
-
-  function updateForm(e) {
-    setForm({
-      ...form,
-      [e.target.name]: e.target.value
-    });
-  }
-
-  async function register(e) {
-    e.preventDefault();
-    setMessage('');
-
-    if (form.password.length < 6) {
-      return setMessage('Password must contain at least 6 characters.');
-    }
-
-    if (form.password !== form.confirmPassword) {
-      return setMessage('Passwords do not match.');
-    }
+  // Load Dashboard Data
+  async function loadDashboard(currentSession) {
+    if (!currentSession || !supabase) return;
 
     setLoading(true);
+    setError('');
+
+    try {
+      const userId = currentSession.user.id;
+
+      const [
+        profileResult,
+        sectionResult,
+        chapterResult,
+        materialResult,
+        chapterProgressResult,
+        materialProgressResult
+      ] = await Promise.all([
+        supabase
+          .from('student_profiles')
+          .select('*')
+          .eq('id', userId)
+          .maybeSingle(),
+
+        supabase
+          .from('sections')
+          .select('*')
+          .eq('published', true)
+          .order('sort_order'),
+
+        supabase
+          .from('chapters')
+          .select('*')
+          .eq('published', true)
+          .order('sort_order'),
+
+        supabase
+          .from('materials')
+          .select('*')
+          .eq('published', true)
+          .order('created_at', { ascending: false }),
+
+        supabase
+          .from('student_chapter_progress')
+          .select('chapter_id')
+          .eq('student_id', userId),
+
+        supabase
+          .from('student_material_progress')
+          .select('material_id')
+          .eq('student_id', userId)
+      ]);
+
+      if (profileResult.data) {
+        setProfile({
+          full_name: profileResult.data.full_name || '',
+          phone: profileResult.data.phone || '',
+          education: profileResult.data.education || ''
+        });
+      }
+
+      if (sectionResult.error) throw sectionResult.error;
+      if (chapterResult.error) throw chapterResult.error;
+      if (materialResult.error) throw materialResult.error;
+      if (chapterProgressResult.error) throw chapterProgressResult.error;
+      if (materialProgressResult.error) throw materialProgressResult.error;
+
+      setSections(sectionResult.data || []);
+      setChapters(chapterResult.data || []);
+      setMaterials(materialResult.data || []);
+
+      setCompletedChapters(
+        (chapterProgressResult.data || []).map(item => item.chapter_id)
+      );
+
+      setViewedMaterials(
+        (materialProgressResult.data || []).map(item => item.material_id)
+      );
+
+    } catch (err) {
+      setError(err.message || 'Unable to load dashboard.');
+    }
+
+    setLoading(false);
+  }
+
+  // Registration
+  async function handleRegister(e) {
+    e.preventDefault();
+    setError('');
+    setMessage('');
 
     const { data, error } = await supabase.auth.signUp({
-      email: form.email.trim(),
+      email: form.email,
       password: form.password,
       options: {
         data: {
@@ -223,99 +196,88 @@ export default function StudentAuth() {
       }
     });
 
-    setLoading(false);
-
     if (error) {
-      setMessage(error.message);
+      setError(error.message);
       return;
     }
 
     if (data.session) {
       setMessage('Registration successful!');
+      setSession(data.session);
+      loadDashboard(data.session);
     } else {
-      setMessage('Account created. Please verify your email.');
-      setMode('login');
+      setMessage('Registration successful. Please verify your email.');
     }
   }
 
-  async function login(e) {
+  // Login
+  async function handleLogin(e) {
     e.preventDefault();
-
-    setLoading(true);
+    setError('');
     setMessage('');
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email: form.email.trim(),
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: form.email,
       password: form.password
     });
 
-    setLoading(false);
-
     if (error) {
-      setMessage(error.message);
-    } else {
-      setMessage('Login successful!');
+      setError(error.message);
+      return;
     }
+
+    setSession(data.session);
+    await loadDashboard(data.session);
   }
 
-  async function forgotPassword(e) {
+  // Forgot Password
+  async function handleForgot(e) {
     e.preventDefault();
-
-    setLoading(true);
+    setError('');
     setMessage('');
 
     const { error } = await supabase.auth.resetPasswordForEmail(
-      form.email.trim(),
+      resetEmail,
       {
         redirectTo: window.location.origin + '/student-auth'
       }
     );
 
-    setLoading(false);
-
     if (error) {
-      setMessage(error.message);
+      setError(error.message);
     } else {
       setMessage('Password reset link sent to your email.');
     }
   }
 
-  async function resetPassword(e) {
+  // Reset Password
+  async function handleReset(e) {
     e.preventDefault();
-
-    if (form.password.length < 6) {
-      return setMessage('Password must contain at least 6 characters.');
-    }
-
-    if (form.password !== form.confirmPassword) {
-      return setMessage('Passwords do not match.');
-    }
-
-    setLoading(true);
+    setError('');
+    setMessage('');
 
     const { error } = await supabase.auth.updateUser({
-      password: form.password
+      password: newPassword
     });
 
-    setLoading(false);
-
     if (error) {
-      setMessage(error.message);
+      setError(error.message);
     } else {
-      setMessage('Password updated successfully.');
+      setMessage('Password updated successfully. Please login.');
+      await supabase.auth.signOut();
+      setSession(null);
       setMode('login');
-      setForm(prev => ({
-        ...prev,
-        password: '',
-        confirmPassword: ''
-      }));
     }
   }
 
+  // Save Profile
   async function saveProfile(e) {
     e.preventDefault();
 
-    setLoading(true);
+    if (!session) return;
+
+    setSaving(true);
+    setError('');
     setMessage('');
 
     const { error } = await supabase
@@ -328,617 +290,661 @@ export default function StudentAuth() {
       })
       .eq('id', session.user.id);
 
-    setLoading(false);
-
     if (error) {
-      setMessage(error.message);
+      setError(error.message);
     } else {
-      setMessage('Profile updated successfully!');
+      setMessage('Profile updated successfully.');
       setEditing(false);
     }
+
+    setSaving(false);
   }
 
-  async function logout() {
-    setLoading(true);
+  // Complete Chapter
+  async function completeChapter(chapterId) {
+    if (!session) return;
 
-    const { error } = await supabase.auth.signOut();
+    if (completedChapters.includes(chapterId)) return;
 
-    setLoading(false);
+    const { error } = await supabase
+      .from('student_chapter_progress')
+      .insert({
+        student_id: session.user.id,
+        chapter_id: chapterId
+      });
 
     if (error) {
-      setMessage(error.message);
-    } else {
-      setSession(null);
-      setMode('login');
-      setMessage('You have logged out.');
+      setError(error.message);
+      return;
     }
+
+    setCompletedChapters(prev => [...prev, chapterId]);
+    setMessage('Chapter completed successfully!');
   }
 
-  if (!supabase) {
+  // Mark Material as Viewed
+  async function markMaterialViewed(materialId) {
+    if (!session) return;
+
+    if (viewedMaterials.includes(materialId)) return;
+
+    const { error } = await supabase
+      .from('student_material_progress')
+      .insert({
+        student_id: session.user.id,
+        material_id: materialId
+      });
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    setViewedMaterials(prev => [...prev, materialId]);
+  }
+
+  // Logout
+  async function logout() {
+    await supabase.auth.signOut();
+
+    setSession(null);
+    setSections([]);
+    setChapters([]);
+    setMaterials([]);
+    setCompletedChapters([]);
+    setViewedMaterials([]);
+    setMode('login');
+  }
+
+  // Progress Calculation
+  const totalTasks = chapters.length + materials.length;
+
+  const completedTasks =
+    completedChapters.length + viewedMaterials.length;
+
+  const progress = totalTasks
+    ? Math.round((completedTasks / totalTasks) * 100)
+    : 0;
+
+  const styles = {
+    page: {
+      minHeight: '100vh',
+      background: '#f3f6fb',
+      padding: '25px 15px',
+      fontFamily: 'Arial, sans-serif',
+      color: '#1e293b'
+    },
+    container: {
+      maxWidth: '1100px',
+      margin: 'auto'
+    },
+    card: {
+      background: '#ffffff',
+      borderRadius: '14px',
+      padding: '22px',
+      marginBottom: '20px',
+      boxShadow: '0 3px 15px rgba(0,0,0,0.05)'
+    },
+    input: {
+      width: '100%',
+      padding: '12px',
+      margin: '8px 0 15px',
+      border: '1px solid #dbe2ea',
+      borderRadius: '8px',
+      boxSizing: 'border-box'
+    },
+    button: {
+      padding: '12px 18px',
+      background: '#15803d',
+      color: 'white',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontWeight: 'bold'
+    },
+    secondary: {
+      padding: '10px 15px',
+      background: '#e2e8f0',
+      color: '#1e293b',
+      border: 'none',
+      borderRadius: '8px',
+      cursor: 'pointer'
+    }
+  };
+
+  if (loading) {
     return (
-      <div style={styles.page}>
-        <div style={styles.card}>
-          Supabase configuration is missing.
-        </div>
+      <div style={{ ...styles.page, textAlign: 'center' }}>
+        <RefreshCw size={30} />
+        <p>Loading Student Dashboard...</p>
       </div>
     );
   }
 
-  // AUTHENTICATED STUDENT DASHBOARD
-
-  if (session && mode !== 'reset') {
+  // Authentication Screens
+  if (!session || mode === 'reset') {
     return (
-      <main style={styles.page}>
-        <div style={styles.container}>
-
-          <div style={{
-            ...styles.card,
-            background: 'linear-gradient(120deg,#087c3b,#20a75a)',
-            color: 'white'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '18px',
-              flexWrap: 'wrap'
-            }}>
-              <UserCircle size={65} />
-
-              <div style={{ flex: 1 }}>
-                <h1 style={{ margin: '0 0 7px' }}>
-                  Welcome, {profile.full_name || 'Student'}!
-                </h1>
-
-                <p style={{ margin: 0 }}>
-                  Welcome to your Solar Learning Hub Dashboard.
-                </p>
-              </div>
-
-              <button
-                onClick={logout}
-                disabled={loading}
-                style={{
-                  ...styles.secondaryButton,
-                  background: 'white',
-                  color: '#159447'
-                }}
-              >
-                <LogOut size={16} /> Logout
-              </button>
-            </div>
-          </div>
-
-          {message && (
-            <div style={{
-              ...styles.card,
-              padding: '13px 18px',
-              color: '#176b35'
-            }}>
-              {message}
-            </div>
-          )}
-
-          {/* DASHBOARD STATISTICS */}
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit,minmax(190px,1fr))',
-            gap: '18px',
-            marginBottom: '22px'
-          }}>
-
-            <div style={styles.card}>
-              <BookOpen size={30} color="#159447" />
-              <h2>{sections.length}</h2>
-              <p>Available Modules</p>
+      <div style={styles.page}>
+        <div style={{ ...styles.container, maxWidth: '450px' }}>
+          <div style={styles.card}>
+            <div style={{ textAlign: 'center', marginBottom: '25px' }}>
+              <Sun size={45} color="#15803d" />
+              <h2>Solar Learning Hub</h2>
+              <p>Student Account Portal</p>
             </div>
 
-            <div style={styles.card}>
-              <FileText size={30} color="#159447" />
-              <h2>{materials.length}</h2>
-              <p>Recent Study Materials</p>
-            </div>
+            {error && (
+              <p style={{ color: 'red', background: '#fee2e2', padding: '10px' }}>
+                {error}
+              </p>
+            )}
 
-            <div style={styles.card}>
-              <GraduationCap size={30} color="#159447" />
-              <h2>Student</h2>
-              <p>Account Type</p>
-            </div>
+            {message && (
+              <p style={{ color: 'green', background: '#dcfce7', padding: '10px' }}>
+                {message}
+              </p>
+            )}
 
-          </div>
-
-          {/* STUDENT PROFILE */}
-
-          <section style={styles.card}>
-
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '12px'
-            }}>
-              <h2>
-                <UserCircle size={23} /> Student Profile
-              </h2>
-
-              <button
-                onClick={() => setEditing(!editing)}
-                style={styles.secondaryButton}
-              >
-                <Edit size={16} />
-                {editing ? 'Cancel Edit' : 'Edit Profile'}
-              </button>
-            </div>
-
-            {profileLoading ? (
-              <p>Loading profile...</p>
-            ) : (
-
-              <form onSubmit={saveProfile}>
-
-                <label>Full Name</label>
-
-                <input
-                  style={styles.input}
-                  value={profile.full_name}
-                  disabled={!editing}
-                  onChange={e => setProfile({
-                    ...profile,
-                    full_name: e.target.value
-                  })}
-                  required
-                />
+            {mode === 'login' && (
+              <form onSubmit={handleLogin}>
+                <h3>Student Login</h3>
 
                 <label>Email Address</label>
-
                 <input
                   style={styles.input}
-                  value={session.user.email || ''}
-                  disabled
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={e => setForm({ ...form, email: e.target.value })}
                 />
 
-                <label>Phone Number</label>
-
+                <label>Password</label>
                 <input
                   style={styles.input}
-                  value={profile.phone}
-                  disabled={!editing}
-                  onChange={e => setProfile({
-                    ...profile,
-                    phone: e.target.value
-                  })}
+                  type="password"
+                  required
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
                 />
 
-                <label>Education</label>
+                <button style={{ ...styles.button, width: '100%' }}>
+                  Login
+                </button>
 
-                <input
-                  style={styles.input}
-                  value={profile.education}
-                  disabled={!editing}
-                  onChange={e => setProfile({
-                    ...profile,
-                    education: e.target.value
-                  })}
-                />
-
-                {editing && (
-                  <button
-                    type="submit"
-                    style={styles.button}
-                    disabled={loading}
-                  >
-                    <Save size={17} />
-                    {loading ? 'Saving...' : 'Save Profile'}
+                <p>
+                  <button type="button" style={styles.secondary}
+                    onClick={() => setMode('forgot')}>
+                    Forgot Password?
                   </button>
-                )}
+                </p>
 
+                <p>
+                  New Student?{' '}
+                  <button type="button" onClick={() => setMode('register')}>
+                    Create Account
+                  </button>
+                </p>
               </form>
             )}
 
-          </section>
+            {mode === 'register' && (
+              <form onSubmit={handleRegister}>
+                <h3>Student Registration</h3>
 
-          {/* SOLAR MODULES */}
+                <input
+                  style={styles.input}
+                  placeholder="Full Name"
+                  required
+                  value={form.full_name}
+                  onChange={e => setForm({ ...form, full_name: e.target.value })}
+                />
 
-          <section style={styles.card}>
+                <input
+                  style={styles.input}
+                  placeholder="Phone Number"
+                  required
+                  value={form.phone}
+                  onChange={e => setForm({ ...form, phone: e.target.value })}
+                />
 
-            <h2>
-              <BookOpen size={23} color="#159447" />
-              Explore Solar Modules
-            </h2>
+                <input
+                  style={styles.input}
+                  placeholder="Education (ITI / Diploma)"
+                  required
+                  value={form.education}
+                  onChange={e => setForm({ ...form, education: e.target.value })}
+                />
 
-            <p>
-              Select a module to start your learning.
-            </p>
+                <input
+                  style={styles.input}
+                  type="email"
+                  placeholder="Email Address"
+                  required
+                  value={form.email}
+                  onChange={e => setForm({ ...form, email: e.target.value })}
+                />
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))',
-              gap: '14px'
-            }}>
+                <input
+                  style={styles.input}
+                  type="password"
+                  placeholder="Password (Minimum 6 characters)"
+                  minLength="6"
+                  required
+                  value={form.password}
+                  onChange={e => setForm({ ...form, password: e.target.value })}
+                />
 
-              {sections.map(section => (
+                <button style={{ ...styles.button, width: '100%' }}>
+                  Register
+                </button>
 
-                <Link
-                  key={section.id}
-                  to={`/modules/${section.id}`}
-                  style={{
-                    display: 'block',
-                    padding: '18px',
-                    border: '1px solid #e1eae4',
-                    borderRadius: '12px',
-                    color: '#174b2c',
-                    textDecoration: 'none',
-                    background: '#fbfdfb'
-                  }}
-                >
-
-                  <BookOpen size={25} color="#159447" />
-
-                  <h3>{section.title}</h3>
-
-                  <p style={{ fontSize: '14px', color: '#64746a' }}>
-                    {section.description}
-                  </p>
-
-                  <span style={{
-                    color: '#159447',
-                    fontWeight: 'bold'
-                  }}>
-                    Start Learning <ArrowRight size={15} />
-                  </span>
-
-                </Link>
-
-              ))}
-
-            </div>
-
-            {sections.length === 0 && (
-              <p>No published modules available.</p>
+                <p>
+                  Already registered?{' '}
+                  <button type="button" onClick={() => setMode('login')}>
+                    Login
+                  </button>
+                </p>
+              </form>
             )}
 
-          </section>
+            {mode === 'forgot' && (
+              <form onSubmit={handleForgot}>
+                <h3>Forgot Password</h3>
 
-          {/* RECENT STUDY MATERIALS */}
+                <input
+                  style={styles.input}
+                  type="email"
+                  placeholder="Registered Email"
+                  required
+                  value={resetEmail}
+                  onChange={e => setResetEmail(e.target.value)}
+                />
 
-          <section style={styles.card}>
+                <button style={{ ...styles.button, width: '100%' }}>
+                  Send Reset Link
+                </button>
 
-            <h2>
-              <FileText size={23} color="#159447" />
-              Recently Added Study Materials
-            </h2>
-
-            {materials.length === 0 ? (
-              <p>No study materials available yet.</p>
-            ) : (
-
-              materials.map(material => (
-
-                <div
-                  key={material.id}
-                  style={{
-                    padding: '14px 0',
-                    borderBottom: '1px solid #edf0ed',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: '12px'
-                  }}
-                >
-
-                  <div>
-                    <b>{material.title}</b>
-
-                    <p style={{
-                      margin: '5px 0',
-                      fontSize: '13px',
-                      color: '#718078'
-                    }}>
-                      {material.description}
-                    </p>
-                  </div>
-
-                  <a
-                    href={material.file_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      color: '#159447',
-                      fontWeight: 'bold',
-                      textDecoration: 'none',
-                      whiteSpace: 'nowrap'
-                    }}
-                  >
-                    Open ↗
-                  </a>
-
-                </div>
-
-              ))
-
+                <p>
+                  <button type="button" onClick={() => setMode('login')}>
+                    Back to Login
+                  </button>
+                </p>
+              </form>
             )}
 
-          </section>
+            {mode === 'reset' && (
+              <form onSubmit={handleReset}>
+                <h3>Set New Password</h3>
 
-          <div style={{
-            textAlign: 'center',
-            color: '#748078',
-            padding: '10px'
-          }}>
-            <Sun size={20} color="#159447" />
-            <p>Keep Learning. Keep Growing with Solar Energy.</p>
+                <input
+                  style={styles.input}
+                  type="password"
+                  minLength="6"
+                  required
+                  placeholder="New Password"
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                />
+
+                <button style={{ ...styles.button, width: '100%' }}>
+                  Update Password
+                </button>
+              </form>
+            )}
           </div>
-
         </div>
-      </main>
+      </div>
     );
   }
 
-  // LOGIN / REGISTRATION / PASSWORD RESET
-
-  const headings = {
-    login: 'Student Login',
-    register: 'Student Registration',
-    forgot: 'Forgot Password',
-    reset: 'Reset Password'
-  };
-
+  // Student Dashboard
   return (
-    <main style={styles.page}>
+    <div style={styles.page}>
+      <div style={styles.container}>
 
-      <div style={{
-        ...styles.card,
-        maxWidth: '460px',
-        margin: 'auto'
-      }}>
+        {/* Header */}
+        <div style={{
+          ...styles.card,
+          background: '#14532d',
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '15px'
+        }}>
+          <div>
+            <h2>Welcome, {profile.full_name || 'Student'}!</h2>
+            <p>Solar Learning Hub - Student Dashboard</p>
+          </div>
 
-        <div style={{ textAlign: 'center' }}>
-
-          <Sun size={48} color="#159447" />
-
-          <h2 style={{ color: '#159447' }}>
-            Solar Learning Hub
-          </h2>
-
-          <h3>{headings[mode]}</h3>
-
+          <button
+            onClick={logout}
+            style={{ ...styles.secondary, display: 'flex', gap: '8px' }}
+          >
+            <LogOut size={18} /> Logout
+          </button>
         </div>
 
+        {error && (
+          <p style={{ color: 'red', background: '#fee2e2', padding: '12px' }}>
+            {error}
+          </p>
+        )}
+
         {message && (
-          <div style={{
-            background: '#edf8f0',
-            color: '#176b35',
-            padding: '12px',
-            borderRadius: '8px',
-            marginBottom: '15px',
-            overflowWrap: 'anywhere'
-          }}>
+          <p style={{ color: 'green', background: '#dcfce7', padding: '12px' }}>
             {message}
+          </p>
+        )}
+
+        {/* Profile */}
+        <div style={styles.card}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <h3><UserCircle size={20} /> Student Profile</h3>
+
+            <button
+              style={styles.secondary}
+              onClick={() => setEditing(!editing)}
+            >
+              <Edit size={16} /> {editing ? 'Cancel' : 'Edit Profile'}
+            </button>
           </div>
-        )}
 
-        {mode === 'register' && (
-          <form onSubmit={register}>
+          {editing ? (
+            <form onSubmit={saveProfile}>
+              <input
+                style={styles.input}
+                placeholder="Full Name"
+                value={profile.full_name}
+                onChange={e => setProfile({ ...profile, full_name: e.target.value })}
+              />
 
-            <label>Full Name</label>
+              <input
+                style={styles.input}
+                placeholder="Phone"
+                value={profile.phone}
+                onChange={e => setProfile({ ...profile, phone: e.target.value })}
+              />
 
-            <input
-              style={styles.input}
-              name="full_name"
-              placeholder="Enter Full Name"
-              value={form.full_name}
-              onChange={updateForm}
-              required
-            />
+              <input
+                style={styles.input}
+                placeholder="Education"
+                value={profile.education}
+                onChange={e => setProfile({ ...profile, education: e.target.value })}
+              />
 
-            <label>Phone Number</label>
-
-            <input
-              style={styles.input}
-              name="phone"
-              placeholder="Enter Phone Number"
-              value={form.phone}
-              onChange={updateForm}
-            />
-
-            <label>Education</label>
-
-            <input
-              style={styles.input}
-              name="education"
-              placeholder="ITI / Diploma / Other"
-              value={form.education}
-              onChange={updateForm}
-            />
-
-            <label>Email Address</label>
-
-            <input
-              style={styles.input}
-              type="email"
-              name="email"
-              placeholder="Enter Email"
-              value={form.email}
-              onChange={updateForm}
-              required
-            />
-
-            <label>Password</label>
-
-            <input
-              style={styles.input}
-              type="password"
-              name="password"
-              placeholder="Create Password"
-              value={form.password}
-              onChange={updateForm}
-              required
-            />
-
-            <label>Confirm Password</label>
-
-            <input
-              style={styles.input}
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm Password"
-              value={form.confirmPassword}
-              onChange={updateForm}
-              required
-            />
-
-            <button style={styles.button} disabled={loading}>
-              {loading ? 'Creating Account...' : 'Create Student Account'}
-            </button>
-
-          </form>
-        )}
-
-        {mode === 'login' && (
-          <form onSubmit={login}>
-
-            <label>Email Address</label>
-
-            <input
-              style={styles.input}
-              type="email"
-              name="email"
-              placeholder="Enter Email"
-              value={form.email}
-              onChange={updateForm}
-              required
-            />
-
-            <label>Password</label>
-
-            <input
-              style={styles.input}
-              type="password"
-              name="password"
-              placeholder="Enter Password"
-              value={form.password}
-              onChange={updateForm}
-              required
-            />
-
-            <button style={styles.button} disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
-            </button>
-
-          </form>
-        )}
-
-        {mode === 'forgot' && (
-          <form onSubmit={forgotPassword}>
-
-            <label>Registered Email Address</label>
-
-            <input
-              style={styles.input}
-              type="email"
-              name="email"
-              placeholder="Enter Registered Email"
-              value={form.email}
-              onChange={updateForm}
-              required
-            />
-
-            <button style={styles.button} disabled={loading}>
-              {loading ? 'Sending...' : 'Send Reset Link'}
-            </button>
-
-          </form>
-        )}
-
-        {mode === 'reset' && (
-          <form onSubmit={resetPassword}>
-
-            <label>New Password</label>
-
-            <input
-              style={styles.input}
-              type="password"
-              name="password"
-              placeholder="New Password"
-              value={form.password}
-              onChange={updateForm}
-              required
-            />
-
-            <label>Confirm New Password</label>
-
-            <input
-              style={styles.input}
-              type="password"
-              name="confirmPassword"
-              placeholder="Confirm New Password"
-              value={form.confirmPassword}
-              onChange={updateForm}
-              required
-            />
-
-            <button style={styles.button} disabled={loading}>
-              {loading ? 'Updating...' : 'Update Password'}
-            </button>
-
-          </form>
-        )}
-
-        <div style={{
-          textAlign: 'center',
-          marginTop: '20px'
-        }}>
-
-          {mode === 'login' && (
-            <>
-              <button
-                onClick={() => {
-                  setMessage('');
-                  setMode('forgot');
-                }}
-                style={styles.secondaryButton}
-              >
-                Forgot Password?
+              <button style={styles.button} disabled={saving}>
+                <Save size={16} /> {saving ? 'Saving...' : 'Save Profile'}
               </button>
+            </form>
+          ) : (
+            <div>
+              <p><strong>Name:</strong> {profile.full_name || 'Not provided'}</p>
+              <p><strong>Email:</strong> {session.user.email}</p>
+              <p><strong>Phone:</strong> {profile.phone || 'Not provided'}</p>
+              <p><strong>Education:</strong> {profile.education || 'Not provided'}</p>
+            </div>
+          )}
+        </div>
 
-              <p>
-                New Student?{' '}
-                <button
-                  onClick={() => {
-                    setMessage('');
-                    setMode('register');
-                  }}
+        {/* Progress */}
+        <div style={styles.card}>
+          <h3><TrendingUp size={22} /> My Learning Progress</h3>
+
+          <h1 style={{ color: '#15803d', fontSize: '38px' }}>
+            {progress}%
+          </h1>
+
+          <div style={{
+            height: '14px',
+            background: '#e2e8f0',
+            borderRadius: '20px',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              width: `${progress}%`,
+              height: '100%',
+              background: '#16a34a',
+              transition: 'width 0.4s'
+            }} />
+          </div>
+
+          <p>
+            {completedTasks} of {totalTasks} learning activities completed
+          </p>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit,minmax(150px,1fr))',
+            gap: '15px'
+          }}>
+            <div style={{ background: '#dcfce7', padding: '15px', borderRadius: '10px' }}>
+              <BookOpen color="#15803d" />
+              <h2>{completedChapters.length}/{chapters.length}</h2>
+              <p>Chapters Completed</p>
+            </div>
+
+            <div style={{ background: '#dbeafe', padding: '15px', borderRadius: '10px' }}>
+              <Eye color="#1d4ed8" />
+              <h2>{viewedMaterials.length}/{materials.length}</h2>
+              <p>Materials Viewed</p>
+            </div>
+
+            <div style={{ background: '#fef3c7', padding: '15px', borderRadius: '10px' }}>
+              <GraduationCap color="#b45309" />
+              <h2>{sections.length}</h2>
+              <p>Available Modules</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Modules and Chapters */}
+        <div style={styles.card}>
+          <h3><BookOpen size={22} /> My Study Modules</h3>
+
+          {sections.length === 0 && <p>No published modules available.</p>}
+
+          {sections.map(section => {
+            const sectionChapters = chapters.filter(
+              chapter => String(chapter.section_id) === String(section.id)
+            );
+
+            const sectionCompleted = sectionChapters.filter(
+              chapter => completedChapters.includes(chapter.id)
+            ).length;
+
+            const isExpanded = expandedSection === section.id;
+
+            return (
+              <div
+                key={section.id}
+                style={{
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '10px',
+                  marginBottom: '15px',
+                  overflow: 'hidden'
+                }}
+              >
+                <div
+                  onClick={() => setExpandedSection(isExpanded ? null : section.id)}
                   style={{
-                    border: 'none',
-                    background: 'none',
-                    color: '#159447',
-                    fontWeight: 'bold',
-                    cursor: 'pointer'
+                    padding: '16px',
+                    background: '#f8fafc',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    gap: '10px'
                   }}
                 >
-                  Register Now
-                </button>
-              </p>
-            </>
-          )}
+                  <div>
+                    <strong>{section.title}</strong>
+                    <p style={{ margin: '6px 0 0', fontSize: '13px' }}>
+                      {sectionCompleted} / {sectionChapters.length} Chapters Completed
+                    </p>
+                  </div>
 
-          {mode !== 'login' && mode !== 'reset' && (
-            <button
-              onClick={() => {
-                setMessage('');
-                setMode('login');
+                  <ArrowRight
+                    style={{
+                      transform: isExpanded ? 'rotate(90deg)' : 'none'
+                    }}
+                  />
+                </div>
+
+                {isExpanded && (
+                  <div style={{ padding: '15px' }}>
+                    {sectionChapters.length === 0 && (
+                      <p>No chapters available.</p>
+                    )}
+
+                    {sectionChapters.map(chapter => {
+                      const done = completedChapters.includes(chapter.id);
+
+                      const chapterMaterials = materials.filter(
+                        material =>
+                          String(material.chapter_id) === String(chapter.id)
+                      );
+
+                      return (
+                        <div
+                          key={chapter.id}
+                          style={{
+                            padding: '14px',
+                            borderBottom: '1px solid #e2e8f0'
+                          }}
+                        >
+                          <div style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '10px',
+                            flexWrap: 'wrap'
+                          }}>
+                            <div>
+                              <strong>{chapter.title}</strong>
+                              <p style={{ fontSize: '13px', color: '#64748b' }}>
+                                {chapter.description}
+                              </p>
+                            </div>
+
+                            <button
+                              disabled={done}
+                              onClick={() => completeChapter(chapter.id)}
+                              style={{
+                                ...styles.button,
+                                background: done ? '#64748b' : '#15803d'
+                              }}
+                            >
+                              {done ? (
+                                <><CheckCircle size={16} /> Completed</>
+                              ) : (
+                                <><Circle size={16} /> Mark Complete</>
+                              )}
+                            </button>
+                          </div>
+
+                          {chapterMaterials.map(material => {
+                            const viewed = viewedMaterials.includes(material.id);
+
+                            return (
+                              <div
+                                key={material.id}
+                                style={{
+                                  marginTop: '12px',
+                                  padding: '12px',
+                                  background: '#f8fafc',
+                                  borderRadius: '8px'
+                                }}
+                              >
+                                <p>
+                                  <FileText size={16} /> {material.title}
+                                </p>
+
+                                {material.description && (
+                                  <p style={{ fontSize: '13px', color: '#64748b' }}>
+                                    {material.description}
+                                  </p>
+                                )}
+
+                                <div style={{
+                                  display: 'flex',
+                                  gap: '10px',
+                                  flexWrap: 'wrap'
+                                }}>
+                                  {material.file_url && (
+                                    <a
+                                      href={material.file_url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={() => markMaterialViewed(material.id)}
+                                      style={{ color: '#15803d', fontWeight: 'bold' }}
+                                    >
+                                      Open Material
+                                    </a>
+                                  )}
+
+                                  <span style={{
+                                    color: viewed ? '#15803d' : '#64748b',
+                                    fontSize: '13px'
+                                  }}>
+                                    {viewed ? '✓ Viewed' : 'Not Viewed'}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Recent Materials */}
+        <div style={styles.card}>
+          <h3><FileText size={22} /> Recent Study Materials</h3>
+
+          {materials.slice(0, 5).map(material => (
+            <div
+              key={material.id}
+              style={{
+                padding: '12px',
+                borderBottom: '1px solid #e2e8f0'
               }}
-              style={styles.secondaryButton}
             >
-              Back to Login
-            </button>
-          )}
+              <strong>{material.title}</strong>
+              <p>{material.description}</p>
 
+              {material.file_url && (
+                <a
+                  href={material.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => markMaterialViewed(material.id)}
+                  style={{ color: '#15803d' }}
+                >
+                  Open Material
+                </a>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <Link to="/" style={{ color: '#15803d' }}>
+            Back to Home
+          </Link>
         </div>
 
       </div>
-
-    </main>
+    </div>
   );
 }
