@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-
 import {
   Link,
   Routes,
@@ -9,78 +8,59 @@ import {
 } from 'react-router-dom';
 
 import {
-  BookOpen,
-  Sun,
-  Calculator,
-  ShieldCheck,
-  LogIn,
-  LogOut,
-  Plus,
-  Upload,
-  Trash2,
-  FileText,
-  ArrowLeft,
-  Battery,
-  Zap,
-  Layers,
-  Factory,
-  PlayCircle,
-  Menu,
-  X,
-  UserCircle,
-  Folder,
-  Eye
+  BookOpen, Sun, Calculator, ShieldCheck, LogIn, LogOut,
+  Plus, Upload, Trash2, FileText, ArrowLeft, Battery,
+  Zap, Layers, Factory, PlayCircle, Menu, X,
+  UserCircle, Folder, Eye
 } from 'lucide-react';
 
 import { supabase } from './supabase';
 import StudentAuth from './StudentAuth.jsx';
 
-
 // =====================================
-// SIX SOLAR LEARNING MODULES
+// SOLAR MODULES
 // =====================================
 
 const MODULES = [
   {
     title: 'Solar PV Fundamentals',
-    description: 'Learn the basic concepts of solar energy and photovoltaic technology.',
+    description: 'Learn solar energy basics and photovoltaic technology.',
     icon: Sun
   },
   {
     title: 'Solar System Design',
-    description: 'Learn solar PV system design, sizing, calculations and installation.',
+    description: 'Learn solar PV design, sizing and installation.',
     icon: Calculator
   },
   {
     title: 'Solar Battery',
-    description: 'Understand solar batteries, charging, capacity and maintenance.',
+    description: 'Understand solar batteries, capacity and maintenance.',
     icon: Battery
   },
   {
     title: 'Solar Inverter',
-    description: 'Learn inverter working principles, types and troubleshooting.',
+    description: 'Learn inverter working principles and troubleshooting.',
     icon: Zap
   },
   {
     title: 'Solar Mounting Structure',
-    description: 'Learn solar panel mounting structures and installation methods.',
+    description: 'Learn solar mounting structures and installation.',
     icon: Layers
   },
   {
     title: 'Solar Panel Manufacturing',
-    description: 'Understand solar module manufacturing and quality testing.',
+    description: 'Understand solar module manufacturing and testing.',
     icon: Factory
   }
 ];
-
 
 // =====================================
 // HEADER
 // =====================================
 
 function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
   const [session, setSession] = useState(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     if (!supabase) return;
@@ -89,22 +69,22 @@ function Header() {
       setSession(data?.session || null);
     });
 
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
+    const { data: { subscription } } =
+      supabase.auth.onAuthStateChange((_event, session) => {
+        setSession(session);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <header className="header">
       <div className="nav container">
 
-        <Link to="/" className="logo" onClick={() => setMenuOpen(false)}>
+        <Link to="/" className="logo" onClick={closeMenu}>
           <Sun size={30} />
-
           <span>
             Solar Learning
             <small>HUB</small>
@@ -114,52 +94,37 @@ function Header() {
         <button
           className="mobile-menu"
           onClick={() => setMenuOpen(!menuOpen)}
-          aria-label="Toggle navigation"
+          aria-label="Toggle menu"
         >
           {menuOpen ? <X /> : <Menu />}
         </button>
 
         <nav className={menuOpen ? 'navlinks open' : 'navlinks'}>
+          <Link to="/" onClick={closeMenu}>Home</Link>
 
-          <Link to="/" onClick={() => setMenuOpen(false)}>
-            Home
-          </Link>
-
-          <a href="/#modules" onClick={() => setMenuOpen(false)}>
+          <a href="/#modules" onClick={closeMenu}>
             Study Modules
           </a>
 
-          <a href="/#tools" onClick={() => setMenuOpen(false)}>
+          <a href="/#tools" onClick={closeMenu}>
             Tools
           </a>
 
-          {session ? (
-            <Link
-              to="/student-auth"
-              className="student-profile-link"
-              onClick={() => setMenuOpen(false)}
-            >
-              <UserCircle size={24} />
-              My Profile
-            </Link>
-          ) : (
-            <Link to="/student-auth" onClick={() => setMenuOpen(false)}>
-              <LogIn size={16} />
-              Student Login
-            </Link>
-          )}
-
-          <Link to="/admin" onClick={() => setMenuOpen(false)}>
-            <ShieldCheck size={16} />
-            Admin
+          <Link to="/student-auth" onClick={closeMenu}>
+            {session ? <UserCircle size={17} /> : <LogIn size={17} />}
+            {session ? 'My Profile' : 'Student Login'}
           </Link>
 
+          <Link to="/admin" onClick={closeMenu}>
+            <ShieldCheck size={17} />
+            Admin
+          </Link>
         </nav>
+
       </div>
     </header>
   );
 }
-
 
 // =====================================
 // FOOTER
@@ -169,11 +134,7 @@ function Footer() {
   return (
     <footer className="footer">
       <div className="container">
-
-        <h3>
-          <Sun size={22} />
-          Solar Learning Hub
-        </h3>
+        <h3><Sun size={22} /> Solar Learning Hub</h3>
 
         <p>
           A learning platform for ITI, Diploma and Electrical Engineering students.
@@ -182,12 +143,10 @@ function Footer() {
         <small>
           © {new Date().getFullYear()} Solar Learning Hub. All Rights Reserved.
         </small>
-
       </div>
     </footer>
   );
 }
-
 
 // =====================================
 // HOME PAGE
@@ -206,7 +165,6 @@ function Home() {
       }
 
       const [sectionResult, materialResult] = await Promise.all([
-
         supabase
           .from('sections')
           .select('*')
@@ -219,7 +177,6 @@ function Home() {
           .eq('published', true)
           .order('created_at', { ascending: false })
           .limit(6)
-
       ]);
 
       if (!sectionResult.error) {
@@ -239,18 +196,18 @@ function Home() {
   const visibleModules = MODULES.map(module => ({
     ...module,
     section: sections.find(
-      s => s.title.trim().toLowerCase() === module.title.toLowerCase()
+      section =>
+        section.title?.trim().toLowerCase() ===
+        module.title.toLowerCase()
     )
   })).filter(item => item.section);
 
   return (
     <>
-
       <section className="hero">
         <div className="container hero-content">
 
           <div className="hero-text">
-
             <span className="eyebrow">
               LEARN • PRACTICE • GROW
             </span>
@@ -275,49 +232,34 @@ function Home() {
                 Solar Calculator
               </a>
             </div>
-
           </div>
 
           <div className="hero-visual">
             <div className="solar-illustration">
-
               <Sun size={85} />
 
               <div className="solar-panel-art">
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
-                <span />
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <span key={i} />
+                ))}
               </div>
-
             </div>
           </div>
 
         </div>
       </section>
 
-
-      {/* MODULES */}
-
       <section className="section container" id="modules">
-
         <div className="section-heading">
           <span className="eyebrow">OUR LEARNING PROGRAM</span>
-
           <h2>Solar Study Modules</h2>
-
-          <p>
-            Choose a module and start learning step by step.
-          </p>
+          <p>Choose a module and start learning step by step.</p>
         </div>
 
         {loading ? (
-          <p className="muted">Loading modules...</p>
+          <p>Loading modules...</p>
         ) : (
           <div className="module-grid">
-
             {visibleModules.map((item, index) => {
               const Icon = item.icon;
 
@@ -327,7 +269,6 @@ function Home() {
                   className="module-card"
                   key={item.section.id}
                 >
-
                   <div className="module-icon">
                     <Icon size={30} />
                   </div>
@@ -337,77 +278,56 @@ function Home() {
                   </span>
 
                   <h3>{item.title}</h3>
-
                   <p>{item.description}</p>
 
                   <span className="read-more">
                     Start Learning →
                   </span>
-
                 </Link>
               );
             })}
-
           </div>
         )}
 
         {!loading && visibleModules.length === 0 && (
-          <p className="muted">
-            No published modules found. Please check the database.
-          </p>
+          <p>No published modules found.</p>
         )}
-
       </section>
-
-
-      {/* TOOLS */}
 
       <section className="section tools-section" id="tools">
         <div className="container">
-
           <div className="section-heading">
             <span className="eyebrow">PRACTICAL TOOLS</span>
-
             <h2>Solar Learning Tools</h2>
-
-            <p>
-              Use simple tools for basic solar calculations.
-            </p>
+            <p>Use simple tools for basic solar calculations.</p>
           </div>
 
           <SolarCalculator />
-
         </div>
       </section>
 
-
-      {/* LATEST MATERIALS */}
-
       <section className="section container">
-
         <div className="section-heading">
           <span className="eyebrow">LEARNING RESOURCES</span>
           <h2>Latest Study Materials</h2>
         </div>
 
         {materials.length === 0 ? (
-          <p className="muted">
-            No study materials available yet.
-          </p>
+          <p>No study materials available yet.</p>
         ) : (
           <div className="latest-grid">
             {materials.map(material => (
-              <MaterialLink key={material.id} material={material} />
+              <MaterialLink
+                key={material.id}
+                material={material}
+              />
             ))}
           </div>
         )}
-
       </section>
-
     </>
   );
 }
-
 
 // =====================================
 // SOLAR CALCULATOR
@@ -427,10 +347,8 @@ function SolarCalculator() {
 
   return (
     <div className="calculator-card">
-
       <div className="calculator-title">
         <Calculator size={30} />
-
         <div>
           <h3>Solar PV Size Calculator</h3>
           <p>Estimate the required solar capacity.</p>
@@ -439,7 +357,6 @@ function SolarCalculator() {
 
       <label>
         Daily Energy Consumption (Wh)
-
         <input
           type="number"
           min="1"
@@ -450,7 +367,6 @@ function SolarCalculator() {
 
       <label>
         Peak Sun Hours per Day
-
         <input
           type="number"
           min="0.1"
@@ -469,11 +385,9 @@ function SolarCalculator() {
         Approximate calculation using 80% system efficiency.
         Actual design requires detailed site assessment.
       </small>
-
     </div>
   );
 }
-
 
 // =====================================
 // MATERIAL LINK
@@ -486,15 +400,14 @@ function MaterialLink({ material }) {
 
   return (
     <div className="material-card">
-
       <div className="material-icon">
-        {isVideo ? <PlayCircle size={26} /> : <FileText size={26} />}
+        {isVideo
+          ? <PlayCircle size={26} />
+          : <FileText size={26} />}
       </div>
 
       <div className="material-info">
-
         <h3>{material.title}</h3>
-
         <p>{material.description}</p>
 
         <a
@@ -505,13 +418,10 @@ function MaterialLink({ material }) {
         >
           {isVideo ? 'Watch Video ↗' : 'Open Material ↗'}
         </a>
-
       </div>
-
     </div>
   );
 }
-
 
 // =====================================
 // MODULE PAGE
@@ -536,7 +446,6 @@ function ModulePage() {
       setLoading(true);
 
       const [s, c, m] = await Promise.all([
-
         supabase
           .from('sections')
           .select('*')
@@ -557,13 +466,11 @@ function ModulePage() {
           .eq('section_id', id)
           .eq('published', true)
           .order('created_at', { ascending: false })
-
       ]);
 
       setSection(s.data || null);
       setChapters(c.data || []);
       setMaterials(m.data || []);
-
       setLoading(false);
     }
 
@@ -571,18 +478,13 @@ function ModulePage() {
   }, [id]);
 
   if (loading) {
-    return (
-      <main className="container section">
-        Loading module...
-      </main>
-    );
+    return <main className="container section">Loading module...</main>;
   }
 
   if (!section) {
     return (
       <main className="container section">
         <h2>Module Not Found</h2>
-
         <button
           className="btn primary"
           onClick={() => navigate('/')}
@@ -595,7 +497,6 @@ function ModulePage() {
 
   return (
     <main className="container section">
-
       <button
         className="btn ghost"
         onClick={() => navigate('/')}
@@ -605,17 +506,10 @@ function ModulePage() {
       </button>
 
       <div className="module-banner">
-
-        <span className="eyebrow">
-          SOLAR LEARNING MODULE
-        </span>
-
+        <span className="eyebrow">SOLAR LEARNING MODULE</span>
         <h1>{section.title}</h1>
-
         <p>{section.description}</p>
-
       </div>
-
 
       <div className="section-heading">
         <h2>Chapters</h2>
@@ -623,20 +517,18 @@ function ModulePage() {
       </div>
 
       {chapters.length === 0 && (
-        <p className="muted">No chapters available yet.</p>
+        <p>No chapters available yet.</p>
       )}
 
       {chapters.map((chapter, index) => {
-
         const chapterMaterials = materials.filter(
-          m => String(m.chapter_id) === String(chapter.id)
+          material =>
+            String(material.chapter_id) === String(chapter.id)
         );
 
         return (
           <section className="chapter-card" key={chapter.id}>
-
             <div className="chapter-heading">
-
               <span className="chapter-number">
                 {String(index + 1).padStart(2, '0')}
               </span>
@@ -645,48 +537,43 @@ function ModulePage() {
                 <h3>{chapter.title}</h3>
                 <p>{chapter.description}</p>
               </div>
-
             </div>
 
             {chapterMaterials.length > 0 && (
               <div className="chapter-materials">
-
                 {chapterMaterials.map(material => (
                   <MaterialLink
                     key={material.id}
                     material={material}
                   />
                 ))}
-
               </div>
             )}
-
           </section>
         );
       })}
-
 
       <div className="section-heading">
         <h2>General Study Materials</h2>
       </div>
 
       {materials
-        .filter(m => !m.chapter_id)
+        .filter(material => !material.chapter_id)
         .map(material => (
-          <MaterialLink key={material.id} material={material} />
+          <MaterialLink
+            key={material.id}
+            material={material}
+          />
         ))}
-
     </main>
   );
 }
-
 
 // =====================================
 // ADMIN PANEL
 // =====================================
 
 function Admin() {
-
   const [session, setSession] = useState(null);
   const [loading, setLoading] = useState(true);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
@@ -713,43 +600,40 @@ function Admin() {
 
   const [msg, setMsg] = useState('');
 
-
   // AUTH SESSION
 
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
+      setCheckingAdmin(false);
       return;
     }
 
     supabase.auth.getSession().then(({ data, error }) => {
       if (error) setMsg(error.message);
-
       setSession(data?.session || null);
       setLoading(false);
     });
 
-    const {
-      data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
-    });
+    const { data: { subscription } } =
+      supabase.auth.onAuthStateChange((_event, newSession) => {
+        setSession(newSession);
+      });
 
     return () => subscription.unsubscribe();
   }, []);
-
 
   // ADMIN SECURITY CHECK
 
   useEffect(() => {
     async function checkAdmin() {
-      setCheckingAdmin(true);
-
       if (!session || !supabase) {
         setAllowed(false);
         setCheckingAdmin(false);
         return;
       }
+
+      setCheckingAdmin(true);
 
       const { data, error } = await supabase.rpc('is_site_admin');
 
@@ -760,37 +644,21 @@ function Admin() {
     checkAdmin();
   }, [session]);
 
-
   // LOAD DATA
 
   async function loadData() {
     if (!supabase) return;
 
     const [s, c, m] = await Promise.all([
-
-      supabase
-        .from('sections')
-        .select('*')
-        .order('sort_order'),
-
-      supabase
-        .from('chapters')
-        .select('*')
-        .order('sort_order'),
-
-      supabase
-        .from('materials')
-        .select('*')
-        .order('created_at', { ascending: false })
-
+      supabase.from('sections').select('*').order('sort_order'),
+      supabase.from('chapters').select('*').order('sort_order'),
+      supabase.from('materials').select('*').order('created_at', {
+        ascending: false
+      })
     ]);
 
     if (s.error || c.error || m.error) {
-      setMsg(
-        s.error?.message ||
-        c.error?.message ||
-        m.error?.message
-      );
+      setMsg(s.error?.message || c.error?.message || m.error?.message);
       return;
     }
 
@@ -802,7 +670,6 @@ function Admin() {
   useEffect(() => {
     if (allowed) loadData();
   }, [allowed]);
-
 
   // LOGIN
 
@@ -819,7 +686,6 @@ function Admin() {
 
     if (error) setMsg(error.message);
   }
-
 
   // ADD CHAPTER
 
@@ -853,8 +719,7 @@ function Admin() {
     setSaving(false);
   }
 
-
-  // UPLOAD FILE
+  // UPLOAD MATERIAL
 
   async function saveMaterial(e) {
     e.preventDefault();
@@ -915,9 +780,7 @@ function Admin() {
       file_url: data.publicUrl,
       file_path: filePath,
       section_id: Number(materialSection),
-      chapter_id: selectedChapter
-        ? Number(selectedChapter)
-        : null,
+      chapter_id: selectedChapter ? Number(selectedChapter) : null,
       published: true
     });
 
@@ -928,14 +791,12 @@ function Admin() {
       setFileTitle('');
       setFileDesc('');
       form.reset();
-
       setMsg('Study material uploaded successfully!');
       await loadData();
     }
 
     setSaving(false);
   }
-
 
   // ADD YOUTUBE VIDEO
 
@@ -948,11 +809,6 @@ function Admin() {
       return;
     }
 
-    if (!videoUrl.trim()) {
-      setMsg('Please enter a video URL.');
-      return;
-    }
-
     let parsedUrl;
 
     try {
@@ -962,15 +818,15 @@ function Admin() {
       return;
     }
 
-    const isYouTube = [
+    const validHosts = [
       'youtube.com',
       'www.youtube.com',
       'm.youtube.com',
       'youtu.be',
       'www.youtu.be'
-    ].includes(parsedUrl.hostname);
+    ];
 
-    if (!isYouTube) {
+    if (!validHosts.includes(parsedUrl.hostname)) {
       setMsg('Please enter a valid YouTube URL.');
       return;
     }
@@ -983,9 +839,7 @@ function Admin() {
       file_url: videoUrl.trim(),
       file_path: null,
       section_id: Number(materialSection),
-      chapter_id: selectedChapter
-        ? Number(selectedChapter)
-        : null,
+      chapter_id: selectedChapter ? Number(selectedChapter) : null,
       published: true
     });
 
@@ -995,7 +849,6 @@ function Admin() {
       setVideoTitle('');
       setVideoDesc('');
       setVideoUrl('');
-
       setMsg('YouTube video added successfully!');
       await loadData();
     }
@@ -1003,27 +856,18 @@ function Admin() {
     setSaving(false);
   }
 
+  // DELETE MATERIAL
 
-  // =====================================
-  // DELETE SELECTED MATERIAL ONLY
-  // =====================================
-
-  async function removeMaterial(m) {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${m.title}"?\n\nOnly this selected material will be deleted.`
-    );
-
-    if (!confirmed) return;
+  async function removeMaterial(material) {
+    if (!window.confirm(`Delete "${material.title}"?`)) return;
 
     setSaving(true);
     setMsg('');
 
-    // Delete selected database record first
-
     const { error } = await supabase
       .from('materials')
       .delete()
-      .eq('id', m.id);
+      .eq('id', material.id);
 
     if (error) {
       setMsg(error.message);
@@ -1031,48 +875,29 @@ function Admin() {
       return;
     }
 
-    // Remove only this file from Storage
-
-    if (m.file_path) {
+    if (material.file_path) {
       const { error: storageError } = await supabase.storage
         .from('materials')
-        .remove([m.file_path]);
+        .remove([material.file_path]);
 
       if (storageError) {
-        setMsg(
-          'Material record deleted, but storage file cleanup failed: ' +
-          storageError.message
-        );
-
-        await loadData();
-        setSaving(false);
-        return;
+        setMsg('Record deleted, but storage cleanup failed: ' + storageError.message);
       }
     }
-
-    setMsg('Selected material deleted successfully!');
 
     await loadData();
     setSaving(false);
   }
 
-
-  // =====================================
-  // DELETE SELECTED CHAPTER ONLY
-  // PRESERVE ITS MATERIALS
-  // =====================================
+  // DELETE CHAPTER
 
   async function removeChapter(chapter) {
-    const confirmed = window.confirm(
-      `Delete chapter "${chapter.title}"?\n\nIts study materials will be preserved as General Materials.`
-    );
-
-    if (!confirmed) return;
+    if (!window.confirm(
+      `Delete "${chapter.title}"? Its materials will be preserved as General Materials.`
+    )) return;
 
     setSaving(true);
     setMsg('');
-
-    // Move only this chapter's materials to General Materials
 
     const { error: updateError } = await supabase
       .from('materials')
@@ -1085,38 +910,20 @@ function Admin() {
       return;
     }
 
-    // Delete only selected chapter
-
     const { error } = await supabase
       .from('chapters')
       .delete()
       .eq('id', chapter.id);
 
-    if (error) {
-      setMsg(error.message);
-    } else {
-      setMsg(
-        'Selected chapter deleted. Its materials have been preserved.'
-      );
-    }
+    setMsg(error ? error.message : 'Chapter deleted. Materials preserved.');
 
     await loadData();
     setSaving(false);
   }
 
-
-  // =====================================
-  // DELETE SELECTED MODULE ONLY
-  // ONLY WHEN EMPTY
-  // =====================================
+  // DELETE EMPTY MODULE
 
   async function removeSection(section) {
-    const confirmed = window.confirm(
-      `Delete module "${section.title}"?\n\nThe module can only be deleted when it has no chapters or materials.`
-    );
-
-    if (!confirmed) return;
-
     const hasChapters = chapters.some(
       c => String(c.section_id) === String(section.id)
     );
@@ -1126,37 +933,28 @@ function Admin() {
     );
 
     if (hasChapters || hasMaterials) {
-      setMsg(
-        'Module not deleted. Please move or delete its chapters and materials first.'
-      );
+      setMsg('Module cannot be deleted because it contains chapters or materials.');
       return;
     }
 
+    if (!window.confirm(`Delete module "${section.title}"?`)) return;
+
     setSaving(true);
-    setMsg('');
 
     const { error } = await supabase
       .from('sections')
       .delete()
       .eq('id', section.id);
 
-    if (error) {
-      setMsg(error.message);
-    } else {
-      setMsg('Selected module deleted successfully!');
-    }
+    setMsg(error ? error.message : 'Module deleted successfully!');
 
     await loadData();
     setSaving(false);
   }
 
-
-  // FILTERED CHAPTERS
-
   const filteredChapters = chapters.filter(
     c => String(c.section_id) === String(materialSection)
   );
-
 
   // CONNECTION CHECK
 
@@ -1169,29 +967,18 @@ function Admin() {
   }
 
   if (loading) {
-    return (
-      <main className="adminwrap">
-        Loading...
-      </main>
-    );
+    return <main className="adminwrap">Loading...</main>;
   }
-
 
   // LOGIN PAGE
 
   if (!session) {
     return (
       <main className="adminwrap">
-
         <form className="loginbox" onSubmit={login}>
-
           <ShieldCheck size={40} />
-
           <h1>Administrator Login</h1>
-
-          <p>
-            Sign in to manage Solar Learning Hub.
-          </p>
+          <p>Sign in to manage Solar Learning Hub.</p>
 
           <label>
             Email
@@ -1209,15 +996,10 @@ function Admin() {
           </button>
 
           {msg && <p className="message">{msg}</p>}
-
         </form>
-
       </main>
     );
   }
-
-
-  // ADMIN CHECK
 
   if (checkingAdmin) {
     return (
@@ -1230,16 +1012,10 @@ function Admin() {
   if (!allowed) {
     return (
       <main className="adminwrap">
-
         <div className="loginbox">
-
           <ShieldCheck size={40} />
-
           <h1>Access Not Authorised</h1>
-
-          <p>
-            This account is not registered as a website administrator.
-          </p>
+          <p>This account is not registered as a website administrator.</p>
 
           <button
             className="btn ghost"
@@ -1247,33 +1023,21 @@ function Admin() {
           >
             Sign Out
           </button>
-
         </div>
-
       </main>
     );
   }
 
-
-  // =====================================
   // ADMIN DASHBOARD
-  // =====================================
 
   return (
     <main className="adminwrap admin-dashboard">
 
       <div className="adminhead">
-
         <div>
-          <div className="eyebrow">
-            CONTROL PANEL
-          </div>
-
+          <div className="eyebrow">CONTROL PANEL</div>
           <h1>Website Administration</h1>
-
-          <p>
-            Signed in as {session.user.email}
-          </p>
+          <p>Signed in as {session.user.email}</p>
         </div>
 
         <button
@@ -1283,36 +1047,22 @@ function Admin() {
           <LogOut size={16} />
           Sign Out
         </button>
-
       </div>
 
+      {msg && <p className="message" role="status">{msg}</p>}
 
-      {msg && (
-        <p className="message" role="status">
-          {msg}
-        </p>
-      )}
-
-
-      {/* =====================================
-          MANAGE MODULES
-      ===================================== */}
+      {/* MANAGE MODULES */}
 
       <section className="admin-section">
-
         <div className="admin-section-title">
           <Folder size={25} />
-
           <div>
             <h2>Manage Modules</h2>
-            <p>
-              View and delete individual empty modules.
-            </p>
+            <p>View and delete individual empty modules.</p>
           </div>
         </div>
 
         {sections.map(section => {
-
           const chapterCount = chapters.filter(
             c => String(c.section_id) === String(section.id)
           ).length;
@@ -1325,124 +1075,76 @@ function Admin() {
 
           return (
             <div className="row" key={section.id}>
-
               <div>
                 <b>{section.title}</b>
-
                 <small>
                   Chapters: {chapterCount} | Materials: {materialCount}
                 </small>
               </div>
 
               <div className="material-actions">
-
-                <span>
-                  {canDelete ? 'Empty Module' : 'Content Available'}
-                </span>
+                <span>{canDelete ? 'Empty Module' : 'Content Available'}</span>
 
                 <button
                   className="iconbtn"
                   onClick={() => removeSection(section)}
                   disabled={saving || !canDelete}
-                  title={
-                    canDelete
-                      ? 'Delete this module'
-                      : 'Remove its chapters and materials first'
-                  }
                   aria-label="Delete module"
                 >
                   <Trash2 size={18} />
                 </button>
-
               </div>
-
             </div>
           );
         })}
-
-        {!sections.length && (
-          <p className="muted">No modules found.</p>
-        )}
-
       </section>
 
-
-      {/* =====================================
-          MANAGE CHAPTERS
-      ===================================== */}
+      {/* MANAGE CHAPTERS */}
 
       <section className="admin-section">
-
         <div className="admin-section-title">
           <BookOpen size={25} />
-
           <div>
             <h2>Manage Chapters</h2>
-            <p>
-              Delete a selected chapter without deleting its study materials.
-            </p>
+            <p>Delete a selected chapter while preserving materials.</p>
           </div>
         </div>
 
         {chapters.map(chapter => {
-
-          const parentSection = sections.find(
+          const parent = sections.find(
             s => String(s.id) === String(chapter.section_id)
           );
 
-          const materialCount = rows.filter(
+          const count = rows.filter(
             m => String(m.chapter_id) === String(chapter.id)
           ).length;
 
           return (
             <div className="row" key={chapter.id}>
-
               <div>
                 <b>{chapter.title}</b>
-
-                <small>
-                  Module: {parentSection?.title || 'Unknown Module'}
-                </small>
-
-                <small>
-                  Attached Materials: {materialCount}
-                </small>
+                <small>Module: {parent?.title || 'Unknown'}</small>
+                <small>Attached Materials: {count}</small>
               </div>
 
-              <div className="material-actions">
-
-                <button
-                  className="iconbtn"
-                  onClick={() => removeChapter(chapter)}
-                  disabled={saving}
-                  title="Delete this chapter only"
-                  aria-label="Delete chapter"
-                >
-                  <Trash2 size={18} />
-                </button>
-
-              </div>
-
+              <button
+                className="iconbtn"
+                onClick={() => removeChapter(chapter)}
+                disabled={saving}
+                aria-label="Delete chapter"
+              >
+                <Trash2 size={18} />
+              </button>
             </div>
           );
         })}
-
-        {!chapters.length && (
-          <p className="muted">No chapters available.</p>
-        )}
-
       </section>
 
-
-      {/* =====================================
-          ADD CHAPTER
-      ===================================== */}
+      {/* ADD CHAPTER */}
 
       <section className="admin-section">
-
         <div className="admin-section-title">
           <Plus size={25} />
-
           <div>
             <h2>Add New Chapter</h2>
             <p>Create a chapter inside any Solar Module.</p>
@@ -1450,44 +1152,34 @@ function Admin() {
         </div>
 
         <form className="admin-form" onSubmit={addChapter}>
-
           <label>
             Select Module
-
             <select
               value={chapterSection}
               onChange={e => setChapterSection(e.target.value)}
               required
             >
               <option value="">Select Module</option>
-
               {sections.map(s => (
-                <option key={s.id} value={s.id}>
-                  {s.title}
-                </option>
+                <option key={s.id} value={s.id}>{s.title}</option>
               ))}
-
             </select>
           </label>
 
           <label>
             Chapter Title
-
             <input
               value={chapterTitle}
               onChange={e => setChapterTitle(e.target.value)}
-              placeholder="Enter chapter name"
               required
             />
           </label>
 
           <label>
             Chapter Description
-
             <textarea
               value={chapterDesc}
               onChange={e => setChapterDesc(e.target.value)}
-              placeholder="Enter chapter description"
             />
           </label>
 
@@ -1495,21 +1187,14 @@ function Admin() {
             <Plus size={16} />
             {saving ? 'Please wait...' : 'Add Chapter'}
           </button>
-
         </form>
-
       </section>
 
-
-      {/* =====================================
-          MATERIAL SETTINGS
-      ===================================== */}
+      {/* MATERIAL SETTINGS */}
 
       <section className="admin-section">
-
         <div className="admin-section-title">
           <BookOpen size={25} />
-
           <div>
             <h2>Material Settings</h2>
             <p>Select where your study material will be published.</p>
@@ -1517,10 +1202,8 @@ function Admin() {
         </div>
 
         <div className="admin-form">
-
           <label>
             Select Module
-
             <select
               value={materialSection}
               onChange={e => {
@@ -1530,82 +1213,58 @@ function Admin() {
               required
             >
               <option value="">Select Module</option>
-
               {sections.map(s => (
-                <option key={s.id} value={s.id}>
-                  {s.title}
-                </option>
+                <option key={s.id} value={s.id}>{s.title}</option>
               ))}
-
             </select>
           </label>
 
           <label>
             Select Chapter
-
             <select
               value={selectedChapter}
               onChange={e => setSelectedChapter(e.target.value)}
             >
               <option value="">General Material</option>
-
               {filteredChapters.map(c => (
-                <option key={c.id} value={c.id}>
-                  {c.title}
-                </option>
+                <option key={c.id} value={c.id}>{c.title}</option>
               ))}
-
             </select>
           </label>
-
         </div>
-
       </section>
 
-
-      {/* =====================================
-          UPLOAD FILE
-      ===================================== */}
+      {/* UPLOAD STUDY MATERIAL */}
 
       <section className="admin-section">
-
         <div className="admin-section-title">
           <Upload size={25} />
-
           <div>
             <h2>Upload Study Material</h2>
-            <p>
-              Upload PDF, PPT, DOC or Image files. Maximum 20 MB.
-            </p>
+            <p>Upload PDF, PPT, DOC or Image files. Maximum 20 MB.</p>
           </div>
         </div>
 
         <form className="admin-form" onSubmit={saveMaterial}>
-
           <label>
             Material Title
-
             <input
               value={fileTitle}
               onChange={e => setFileTitle(e.target.value)}
-              placeholder="Enter material title"
               required
             />
           </label>
 
           <label>
             Description
-
             <textarea
               value={fileDesc}
               onChange={e => setFileDesc(e.target.value)}
-              placeholder="Enter material description"
             />
           </label>
 
           <label>
             Select File
-
             <input
               name="file"
               type="file"
@@ -1618,21 +1277,14 @@ function Admin() {
             <Upload size={16} />
             {saving ? 'Uploading...' : 'Upload Material'}
           </button>
-
         </form>
-
       </section>
 
-
-      {/* =====================================
-          ADD YOUTUBE VIDEO
-      ===================================== */}
+      {/* ADD YOUTUBE VIDEO */}
 
       <section className="admin-section">
-
         <div className="admin-section-title">
           <PlayCircle size={25} />
-
           <div>
             <h2>Add YouTube Video</h2>
             <p>Add a video to your selected module and chapter.</p>
@@ -1640,31 +1292,25 @@ function Admin() {
         </div>
 
         <form className="admin-form" onSubmit={saveVideo}>
-
           <label>
             Video Title
-
             <input
               value={videoTitle}
               onChange={e => setVideoTitle(e.target.value)}
-              placeholder="Enter video title"
               required
             />
           </label>
 
           <label>
             Video Description
-
             <textarea
               value={videoDesc}
               onChange={e => setVideoDesc(e.target.value)}
-              placeholder="Enter video description"
             />
           </label>
 
           <label>
             YouTube Video URL
-
             <input
               type="url"
               value={videoUrl}
@@ -1678,95 +1324,64 @@ function Admin() {
             <PlayCircle size={16} />
             {saving ? 'Please wait...' : 'Add Video'}
           </button>
-
         </form>
-
       </section>
 
-
-      {/* =====================================
-          MANAGE STUDY MATERIALS
-      ===================================== */}
+      {/* MANAGE MATERIALS */}
 
       <section className="admin-section">
-
         <div className="admin-section-title">
           <FileText size={25} />
-
           <div>
             <h2>Manage Study Materials</h2>
-            <p>
-              View and delete selected PDF files and YouTube videos.
-            </p>
+            <p>View and delete selected study materials and videos.</p>
           </div>
         </div>
 
-        {rows.map(m => {
-
+        {rows.map(material => {
           const isVideo =
-            m.file_url?.includes('youtube.com') ||
-            m.file_url?.includes('youtu.be');
+            material.file_url?.includes('youtube.com') ||
+            material.file_url?.includes('youtu.be');
 
           return (
-            <div className="row" key={m.id}>
-
+            <div className="row" key={material.id}>
               <div>
-                <b>{m.title}</b>
-
-                <small>
-                  {isVideo ? 'YouTube Video' : 'Study Material'}
-                </small>
-
-                <small>{m.description}</small>
+                <b>{material.title}</b>
+                <small>{isVideo ? 'YouTube Video' : 'Study Material'}</small>
+                <small>{material.description}</small>
               </div>
 
               <div className="material-actions">
-
                 <a
-                  href={m.file_url}
+                  href={material.file_url}
                   target="_blank"
                   rel="noreferrer"
-                  title="View material"
                 >
                   <Eye size={17} /> View ↗
                 </a>
 
                 <button
                   className="iconbtn"
-                  onClick={() => removeMaterial(m)}
+                  onClick={() => removeMaterial(material)}
                   disabled={saving}
-                  title="Delete only this material"
                   aria-label="Delete material"
                 >
                   <Trash2 size={18} />
                 </button>
-
               </div>
-
             </div>
           );
         })}
-
-        {!rows.length && (
-          <p className="muted">
-            No materials uploaded yet.
-          </p>
-        )}
-
       </section>
-
 
       <p className="securitynote">
         <ShieldCheck size={18} />
-
         Admin permissions are protected by Supabase Row Level Security.
         Never expose your Supabase secret or service-role key.
       </p>
-
     </main>
   );
 }
-
 
 // =====================================
 // MAIN APP
@@ -1775,15 +1390,10 @@ function Admin() {
 export default function App() {
   return (
     <>
-
       <Header />
 
       <Routes>
-
-        <Route
-          path="/"
-          element={<Home />}
-        />
+        <Route path="/" element={<Home />} />
 
         <Route
           path="/modules/:id"
@@ -1804,21 +1414,16 @@ export default function App() {
           path="*"
           element={
             <main className="container section">
-
               <h1>404 - Page Not Found</h1>
-
               <Link to="/" className="btn primary">
                 Back to Home
               </Link>
-
             </main>
           }
         />
-
       </Routes>
 
       <Footer />
-
     </>
   );
 }
