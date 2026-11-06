@@ -847,3 +847,41 @@ main.adminwrap.admin-dashboard .admin-section label {
   border: 1px solid var(--line) !important;
   border-radius: 15px !important;
 }
+/* Admin Dashboard Card Separation */
+
+main:has(> section) {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+main:has(> section) > section {
+  display: block !important;
+  width: 100%;
+  box-sizing: border-box;
+  background: #ffffff !important;
+  border: 1px solid #dce9e1 !important;
+  border-radius: 18px !important;
+  padding: 28px !important;
+  margin: 0 !important;
+  box-shadow: 0 5px 20px rgba(0, 70, 40, 0.09) !important;
+}
+
+main:has(> section) > section h2 {
+  color: #087b48;
+  border-bottom: 1px solid #e5eee8;
+  padding-bottom: 14px;
+  margin-top: 0;
+}
+
+main:has(> section) > section label {
+  display: block;
+  font-weight: 600;
+  margin-top: 10px;
+}
+
+@media (max-width: 600px) {
+  main:has(> section) > section {
+    padding: 18px !important;
+  }
+}
