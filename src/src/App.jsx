@@ -86,11 +86,8 @@ function Header() {
       <div className="nav container">
 
         <Link to="/" className="logo" onClick={closeMenu}>
-          <Sun size={30} />
-          <span>
-            Solar Learning
-            <small>HUB</small>
-          </span>
+          <Sun size={38} />
+          <span>Solar Learning Hub</span>
         </Link>
 
         <button
@@ -98,22 +95,28 @@ function Header() {
           onClick={() => setMenuOpen(!menuOpen)}
           aria-label="Toggle menu"
         >
-          {menuOpen ? <X /> : <Menu />}
+          {menuOpen ? <X size={25} /> : <Menu size={25} />}
         </button>
 
         <nav className={menuOpen ? 'navlinks open' : 'navlinks'}>
-          <Link to="/" onClick={closeMenu}>Home</Link>
+
+          <Link to="/" onClick={closeMenu}>
+            <BookOpen size={17} />
+            Home
+          </Link>
 
           <a href="/#modules" onClick={closeMenu}>
-            Study Modules
+            <Folder size={17} />
+            Modules
           </a>
 
           <a href="/#tools" onClick={closeMenu}>
+            <Calculator size={17} />
             Tools
           </a>
 
           <Link to="/student-auth" onClick={closeMenu}>
-            {session ? <UserCircle size={17} /> : <LogIn size={17} />}
+            <UserCircle size={17} />
             {session ? 'My Profile' : 'Student Login'}
           </Link>
 
@@ -121,7 +124,12 @@ function Header() {
             <ShieldCheck size={17} />
             Admin
           </Link>
+
         </nav>
+
+        <span className="header-tag">
+          🌿 Clean Energy • Green Future
+        </span>
 
       </div>
     </header>
@@ -136,6 +144,7 @@ function Footer() {
   return (
     <footer className="footer">
       <div className="container">
+
         <h3>
           <Sun size={22} />
           Solar Learning Hub
@@ -146,8 +155,10 @@ function Footer() {
         </p>
 
         <small>
-          © {new Date().getFullYear()} Solar Learning Hub. All Rights Reserved.
+          © {new Date().getFullYear()} Solar Learning Hub.
+          All Rights Reserved.
         </small>
+
       </div>
     </footer>
   );
@@ -213,56 +224,87 @@ function Home() {
 
   return (
     <>
+
+      {/* HERO SECTION */}
+
       <section className="hero">
-        <div className="container hero-content">
+
+        <div className="hero-content container">
 
           <div className="hero-text">
+
             <span className="eyebrow">
               LEARN • PRACTICE • GROW
             </span>
 
             <h1>
-              Learn Solar Energy.
+              Learn Solar
               <br />
-              Build Your Future.
+              Energy.
+              <br />
+              Build Your
+              <br />
+              Future.
             </h1>
 
             <p>
-              Explore solar PV technology, system design, batteries,
-              inverters, mounting structures and manufacturing.
+              Explore solar PV technology, system design,
+              batteries, inverters, mounting structures
+              and manufacturing.
             </p>
 
             <div className="hero-buttons">
+
               <a href="#modules" className="btn primary">
-                Explore Modules
+                <BookOpen size={20} />
+                Explore Modules →
               </a>
 
               <a href="#tools" className="btn ghost">
+                <Calculator size={20} />
                 Solar Calculator
               </a>
+
             </div>
+
           </div>
 
           <div className="hero-visual">
-            <div className="solar-illustration">
-              <Sun size={85} />
 
-              <div className="solar-panel-art">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <span key={i} />
-                ))}
+            <div className="hero-image">
+
+              <div className="hero-image-text">
+                Switch to Solar
+                <br />
+                for a Better Tomorrow
               </div>
+
             </div>
+
           </div>
 
         </div>
+
+        <div className="hero-wave"></div>
+
       </section>
 
+      {/* SOLAR MODULES */}
+
       <section className="section container" id="modules">
+
         <div className="section-heading">
-          <span className="eyebrow">OUR LEARNING PROGRAM</span>
+
+          <span className="eyebrow">
+            OUR LEARNING PROGRAM
+          </span>
+
           <h2>Solar Study Modules</h2>
-          <p>Choose a module and start learning step by step.</p>
+
+          <p>
+            Choose a module and start learning step by step.
+          </p>
+
         </div>
 
         {loading ? (
@@ -271,7 +313,9 @@ function Home() {
           <p className="message">{error}</p>
         ) : (
           <div className="module-grid">
+
             {visibleModules.map((item, index) => {
+
               const Icon = item.icon;
 
               return (
@@ -280,6 +324,7 @@ function Home() {
                   className="module-card"
                   key={item.section.id}
                 >
+
                   <div className="module-icon">
                     <Icon size={30} />
                   </div>
@@ -295,48 +340,81 @@ function Home() {
                   <span className="read-more">
                     Start Learning →
                   </span>
+
                 </Link>
               );
             })}
+
           </div>
         )}
 
         {!loading && !error && visibleModules.length === 0 && (
           <p>No published modules found.</p>
         )}
+
       </section>
 
+      {/* SOLAR TOOLS */}
+
       <section className="section tools-section" id="tools">
+
         <div className="container">
+
           <div className="section-heading">
-            <span className="eyebrow">PRACTICAL TOOLS</span>
+
+            <span className="eyebrow">
+              PRACTICAL TOOLS
+            </span>
+
             <h2>Solar Learning Tools</h2>
-            <p>Use simple tools for basic solar calculations.</p>
+
+            <p>
+              Use simple tools for basic solar calculations.
+            </p>
+
           </div>
 
           <SolarCalculator />
+
         </div>
+
       </section>
 
+      {/* LATEST MATERIALS */}
+
       <section className="section container">
+
         <div className="section-heading">
-          <span className="eyebrow">LEARNING RESOURCES</span>
+
+          <span className="eyebrow">
+            LEARNING RESOURCES
+          </span>
+
           <h2>Latest Study Materials</h2>
+
         </div>
 
         {materials.length === 0 ? (
+
           <p>No study materials available yet.</p>
+
         ) : (
+
           <div className="latest-grid">
+
             {materials.map(material => (
               <MaterialLink
                 key={material.id}
                 material={material}
               />
             ))}
+
           </div>
+
         )}
+
       </section>
+
     </>
   );
 }
@@ -358,14 +436,18 @@ function SolarCalculator() {
       : '0.00';
 
   return (
+
     <div className="calculator-card">
+
       <div className="calculator-title">
+
         <Calculator size={30} />
 
         <div>
           <h3>Solar PV Size Calculator</h3>
           <p>Estimate the required solar capacity.</p>
         </div>
+
       </div>
 
       <label>
@@ -392,14 +474,18 @@ function SolarCalculator() {
       </label>
 
       <div className="calculator-result">
+
         <span>Estimated Solar System Size</span>
+
         <strong>{systemSize} kW</strong>
+
       </div>
 
       <small>
         Approximate calculation using 80% system efficiency.
         Actual design requires detailed site assessment.
       </small>
+
     </div>
   );
 }
@@ -409,12 +495,15 @@ function SolarCalculator() {
 // =====================================
 
 function MaterialLink({ material }) {
+
   const isVideo =
     material.file_url?.includes('youtube.com') ||
     material.file_url?.includes('youtu.be');
 
   return (
+
     <div className="material-card">
+
       <div className="material-icon">
         {isVideo
           ? <PlayCircle size={26} />
@@ -422,7 +511,9 @@ function MaterialLink({ material }) {
       </div>
 
       <div className="material-info">
+
         <h3>{material.title}</h3>
+
         <p>{material.description}</p>
 
         <a
@@ -433,7 +524,9 @@ function MaterialLink({ material }) {
         >
           {isVideo ? 'Watch Video ↗' : 'Open Material ↗'}
         </a>
+
       </div>
+
     </div>
   );
 }
@@ -443,6 +536,7 @@ function MaterialLink({ material }) {
 // =====================================
 
 function ModulePage() {
+
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -453,7 +547,9 @@ function ModulePage() {
   const [error, setError] = useState('');
 
   useEffect(() => {
+
     async function fetchModule() {
+
       if (!supabase) {
         setError('Supabase connection is not configured.');
         setLoading(false);
@@ -464,6 +560,7 @@ function ModulePage() {
       setError('');
 
       const [s, c, m] = await Promise.all([
+
         supabase
           .from('sections')
           .select('*')
@@ -484,6 +581,7 @@ function ModulePage() {
           .eq('section_id', id)
           .eq('published', true)
           .order('created_at', { ascending: false })
+
       ]);
 
       if (s.error || c.error || m.error) {
@@ -498,9 +596,11 @@ function ModulePage() {
       setChapters(c.data || []);
       setMaterials(m.data || []);
       setLoading(false);
+
     }
 
     fetchModule();
+
   }, [id]);
 
   if (loading) {
@@ -514,14 +614,18 @@ function ModulePage() {
   if (error) {
     return (
       <main className="container section">
+
         <h2>Unable to load module</h2>
+
         <p>{error}</p>
+
         <button
           className="btn primary"
           onClick={() => navigate('/')}
         >
           Back to Home
         </button>
+
       </main>
     );
   }
@@ -529,6 +633,7 @@ function ModulePage() {
   if (!section) {
     return (
       <main className="container section">
+
         <h2>Module Not Found</h2>
 
         <button
@@ -537,12 +642,15 @@ function ModulePage() {
         >
           Back to Home
         </button>
+
       </main>
     );
   }
 
   return (
+
     <main className="container section">
+
       <button
         className="btn ghost"
         onClick={() => navigate('/')}
@@ -552,14 +660,23 @@ function ModulePage() {
       </button>
 
       <div className="module-banner">
-        <span className="eyebrow">SOLAR LEARNING MODULE</span>
+
+        <span className="eyebrow">
+          SOLAR LEARNING MODULE
+        </span>
+
         <h1>{section.title}</h1>
+
         <p>{section.description}</p>
+
       </div>
 
       <div className="section-heading">
+
         <h2>Chapters</h2>
+
         <p>Explore the chapters of this module.</p>
+
       </div>
 
       {chapters.length === 0 && (
@@ -567,14 +684,18 @@ function ModulePage() {
       )}
 
       {chapters.map((chapter, index) => {
+
         const chapterMaterials = materials.filter(
           material =>
             String(material.chapter_id) === String(chapter.id)
         );
 
         return (
+
           <section className="chapter-card" key={chapter.id}>
+
             <div className="chapter-heading">
+
               <span className="chapter-number">
                 {String(index + 1).padStart(2, '0')}
               </span>
@@ -583,19 +704,28 @@ function ModulePage() {
                 <h3>{chapter.title}</h3>
                 <p>{chapter.description}</p>
               </div>
+
             </div>
 
             {chapterMaterials.length > 0 && (
+
               <div className="chapter-materials">
+
                 {chapterMaterials.map(material => (
+
                   <MaterialLink
                     key={material.id}
                     material={material}
                   />
+
                 ))}
+
               </div>
+
             )}
+
           </section>
+
         );
       })}
 
@@ -606,15 +736,17 @@ function ModulePage() {
       {materials
         .filter(material => !material.chapter_id)
         .map(material => (
+
           <MaterialLink
             key={material.id}
             material={material}
           />
+
         ))}
+
     </main>
   );
 }
-
 // =====================================
 // ADMIN PANEL
 // =====================================
@@ -693,9 +825,7 @@ function Admin() {
 
     const [s, c, m] = await Promise.all([
       supabase.from('sections').select('*').order('sort_order'),
-
       supabase.from('chapters').select('*').order('sort_order'),
-
       supabase
         .from('materials')
         .select('*')
@@ -703,11 +833,7 @@ function Admin() {
     ]);
 
     if (s.error || c.error || m.error) {
-      setMsg(
-        s.error?.message ||
-        c.error?.message ||
-        m.error?.message
-      );
+      setMsg(s.error?.message || c.error?.message || m.error?.message);
       return;
     }
 
@@ -1459,6 +1585,7 @@ function Admin() {
         Admin permissions are protected by Supabase Row Level Security.
         Never expose your Supabase secret or service-role key.
       </p>
+
     </main>
   );
 }
